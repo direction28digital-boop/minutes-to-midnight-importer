@@ -1,13 +1,14 @@
+import os
 from pathlib import Path
 import json
 import re
 import requests
 from datetime import datetime
 
-SERPAPI_KEY = "4e4a428b377ca961b1fb3e2e956cb6629b113a6bd2fa574056836964ead832cb"
-WP_BASE_URL = "https://orange-pigeon-586276.hostingersite.com"
-WP_USER = "m2m_ingest"
-WP_PASSWORD = "Itcb4fungni!"
+SERPAPI_KEY = os.environ["4e4a428b377ca961b1fb3e2e956cb6629b113a6bd2fa574056836964ead832cb"]
+WP_BASE_URL = os.environ["https://orange-pigeon-586276.hostingersite.com"]
+WP_USER = os.environ["m2m_ingest"]
+WP_PASSWORD = os.environ["Itcb4fungni!"]
 
 DATA_DIR = Path("data_events")
 DATA_DIR.mkdir(exist_ok=True)
