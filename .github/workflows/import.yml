@@ -1,0 +1,44 @@
+name: M2M nightly imports
+
+on:
+  schedule:
+    # Runs every day at 09:00 UTC (2 AM Phoenix time; adjust as needed)
+    - cron: '0 9 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  imports:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        # Use the same Python version you used locally
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run RescueGroups importer
+        env:
+          RG_API_KEY: ${{ secrets.RG_API_KEY }}
+          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
+        run: |
+          python rg_fetch_and_normalize_http.py
+
+      - name: Run SerpApi events importer
+        env:
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
+        run: |
+          python events_serpapi.py
