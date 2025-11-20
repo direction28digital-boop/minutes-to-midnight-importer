@@ -3,14 +3,14 @@ from pathlib import Path
 import json
 import requests
 
-API_KEY = os.environ["Ymwe0yrg"]
-WP_BASE_URL = os.environ["https://orange-pigeon-586276.hostingersite.com"]
-WP_USER = os.environ["m2m_ingest"]
-WP_PASSWORD = os.environ["Itcb4fungni!"]
+API_KEY = os.environ["RG_API_KEY"]
+WP_BASE_URL = os.environ["WP_BASE_URL"]
+WP_USER = os.environ["WP_USER"]
+WP_PASSWORD = os.environ["WP_PASSWORD"]
+
 BASE_URL = "https://api.rescuegroups.org/v5/public/animals/search/available/dogs"
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
-
 
 def fetch_page(page: int, limit: int = 250) -> dict:
     headers = {
