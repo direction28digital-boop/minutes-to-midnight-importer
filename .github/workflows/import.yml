@@ -45,7 +45,6 @@ jobs:
 
       - name: Import SerpApi events
         run: |
-          source .venv/bin/activate
           python events_fetch_and_normalize_serpapi.py
         env:
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
