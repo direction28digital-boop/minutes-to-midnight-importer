@@ -42,3 +42,13 @@ jobs:
           WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
         run: |
           python events_fetch_and_normalize_serpapi.py
+
+      - name: Import SerpApi events
+        run: |
+          source .venv/bin/activate
+          python events_fetch_and_normalize_serpapi.py
+        env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
