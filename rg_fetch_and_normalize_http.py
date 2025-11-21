@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 import json
 import requests
@@ -11,6 +12,14 @@ WP_PASSWORD = os.environ["WP_PASSWORD"]
 BASE_URL = "https://api.rescuegroups.org/v5/public/animals/search/available/dogs"
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
+
+
+def slugify(value: str) -> str:
+    """Simple slug helper for org and dog names."""
+    value = value.lower()
+    value = re.sub(r"[^a-z0-9]+", "-", value)
+    return value.strip("-") or "item"
+
 
 def fetch_page(page: int, limit: int = 250) -> dict:
     headers = {
@@ -44,8 +53,8 @@ def normalize_animals(page_data: dict):
     animals = page_data.get("data", [])
     included = page_data.get("included", [])
 
-    orgs_by_id = {}
-    pictures_by_animal_id = {}
+    orgs_by_id: dict[str, dict] = {}
+    pictures_by_animal_id: dict[str, list[dict]] = {}
 
     for inc in included:
         inc_type = inc.get("type")
@@ -59,7 +68,7 @@ def normalize_animals(page_data: dict):
                 continue
             pictures_by_animal_id.setdefault(animal_id, []).append(inc)
 
-    normalized = []
+    normalized: list[dict] = []
 
     for animal in animals:
         attrs = animal.get("attributes", {})
@@ -71,7 +80,7 @@ def normalize_animals(page_data: dict):
             if isinstance(org_data, list) and org_data:
                 org_id = org_data[0]["id"]
 
-        org_attrs = {}
+        org_attrs: dict = {}
         if org_id and org_id in orgs_by_id:
             org_attrs = orgs_by_id[org_id].get("attributes", {})
 
@@ -80,21 +89,9 @@ def normalize_animals(page_data: dict):
         postal = org_attrs.get("postalcode") or ""
         country = map_country_to_code(org_attrs.get("country") or "")
 
-        photos = []
-        for pic in pictures_by_animal_id.get(animal["id"], []):
-            p_attrs = pic.get("attributes", {})
-            original = p_attrs.get("original") or {}
-            large = p_attrs.get("large") or {}
-            small = p_attrs.get("small") or {}
-            photos.append(
-                {
-                    "sourceUrl": original.get("url"),
-                    "largeUrl": large.get("url"),
-                    "thumbnailUrl": small.get("url"),
-                    "mediaId": pic.get("id"),
-                    "order": int(p_attrs.get("order") or 0),
-                }
-            )
+        # We are intentionally NOT exposing RG image URLs here.
+        # We still have pictures_by_animal_id if we later build a server-side ingester.
+        photos: list[dict] = []
 
         status = "Available"
 
@@ -121,6 +118,13 @@ def normalize_animals(page_data: dict):
         mixed = bool(attrs.get("isBreedMixed"))
 
         m2m_id = f"rg-{org_id}-{animal['id']}"
+
+        # Build a stable image key based on org + RG animal ID + dog name
+        org_name = org_attrs.get("name") or f"org-{org_id or 'unknown'}"
+        org_slug = slugify(org_name)
+        dog_name = attrs.get("name") or f"dog-{animal['id']}"
+        dog_slug = slugify(dog_name)
+        image_key = f"{org_slug}/{animal['id']}-{dog_slug}.jpg"
 
         normalized.append(
             {
@@ -151,7 +155,7 @@ def normalize_animals(page_data: dict):
                     "goodWithCats": attrs.get("isCatsOk") or "",
                     "goodWithKids": attrs.get("isKidsOk") or "",
                 },
-                "photos": photos,
+                "photos": photos,  # RG URLs intentionally omitted
                 "org": {
                     "name": org_attrs.get("name") or "",
                     "city": city,
@@ -160,6 +164,7 @@ def normalize_animals(page_data: dict):
                     "websiteUrl": org_attrs.get("url") or "",
                 },
                 "petProfileUrl": "",
+                "imageKey": image_key,          # <-- NEW FIELD
                 "lastUpdatedEpoch": 0,
             }
         )
@@ -190,7 +195,9 @@ def push_animals_to_wp(normalized_path: Path, max_count: int | None = None) -> N
 
             # upsert logic: check if a post with this slug already exists
             params = {"slug": slug} if slug else {}
-            get_resp = session.get(base_url, params=params, auth=(WP_USER, WP_PASSWORD), timeout=60)
+            get_resp = session.get(
+                base_url, params=params, auth=(WP_USER, WP_PASSWORD), timeout=60
+            )
             if not get_resp.ok:
                 print("Failed to lookup animal", m2m_id, get_resp.status_code, get_resp.text)
                 continue
@@ -199,11 +206,15 @@ def push_animals_to_wp(normalized_path: Path, max_count: int | None = None) -> N
             if isinstance(existing, list) and existing:
                 post_id = existing[0].get("id")
                 update_url = f"{base_url}/{post_id}"
-                resp = session.post(update_url, json=payload, auth=(WP_USER, WP_PASSWORD), timeout=60)
+                resp = session.post(
+                    update_url, json=payload, auth=(WP_USER, WP_PASSWORD), timeout=60
+                )
                 action = "Updated"
             else:
                 create_payload = {**payload, "slug": slug} if slug else payload
-                resp = session.post(base_url, json=create_payload, auth=(WP_USER, WP_PASSWORD), timeout=60)
+                resp = session.post(
+                    base_url, json=create_payload, auth=(WP_USER, WP_PASSWORD), timeout=60
+                )
                 action = "Created"
 
             if not resp.ok:
