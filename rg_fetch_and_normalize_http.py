@@ -2,7 +2,9 @@ import os
 import re
 from pathlib import Path
 import json
+import time
 import requests
+from requests.exceptions import ConnectionError as RequestsConnectionError
 
 API_KEY = os.environ["RG_API_KEY"]
 WP_BASE_URL = os.environ["WP_BASE_URL"]
@@ -49,7 +51,7 @@ def map_country_to_code(country: str) -> str:
     return country[:2].upper()
 
 
-def normalize_animals(page_data: dict):
+def normalize_animals(page_data: dict) -> list[dict]:
     animals = page_data.get("data", [])
     included = page_data.get("included", [])
 
@@ -164,7 +166,7 @@ def normalize_animals(page_data: dict):
                     "websiteUrl": org_attrs.get("url") or "",
                 },
                 "petProfileUrl": "",
-                "imageKey": image_key,          # <-- NEW FIELD
+                "imageKey": image_key,
                 "lastUpdatedEpoch": 0,
             }
         )
@@ -175,6 +177,22 @@ def normalize_animals(page_data: dict):
 def push_animals_to_wp(normalized_path: Path, max_count: int | None = None) -> None:
     base_url = f"{WP_BASE_URL.rstrip('/')}/wp-json/wp/v2/m2mr_animal"
     session = requests.Session()
+
+    def safe_post(url: str, payload: dict) -> tuple[bool, requests.Response | None]:
+        """POST with simple retry on connection errors."""
+        for attempt in range(3):
+            try:
+                resp = session.post(
+                    url,
+                    json=payload,
+                    auth=(WP_USER, WP_PASSWORD),
+                    timeout=60,
+                )
+                return True, resp
+            except RequestsConnectionError as e:
+                print(f"Connection error talking to {url} (attempt {attempt + 1}/3): {e}")
+                time.sleep(2 * (attempt + 1))  # backoff: 2s, 4s, 6s
+        return False, None
 
     count = 0
     with normalized_path.open("r", encoding="utf-8") as f:
@@ -206,19 +224,17 @@ def push_animals_to_wp(normalized_path: Path, max_count: int | None = None) -> N
             if isinstance(existing, list) and existing:
                 post_id = existing[0].get("id")
                 update_url = f"{base_url}/{post_id}"
-                resp = session.post(
-                    update_url, json=payload, auth=(WP_USER, WP_PASSWORD), timeout=60
-                )
+                ok, resp = safe_post(update_url, payload)
                 action = "Updated"
             else:
                 create_payload = {**payload, "slug": slug} if slug else payload
-                resp = session.post(
-                    base_url, json=create_payload, auth=(WP_USER, WP_PASSWORD), timeout=60
-                )
+                ok, resp = safe_post(base_url, create_payload)
                 action = "Created"
 
-            if not resp.ok:
-                print("Failed to upsert animal", m2m_id, resp.status_code, resp.text)
+            if not ok or resp is None or not resp.ok:
+                status = resp.status_code if resp is not None else "no-response"
+                text = resp.text if resp is not None else ""
+                print("Failed to upsert animal", m2m_id, status, text)
             else:
                 created = resp.json()
                 print(f"{action} animal post", created.get("id"), "for", m2m_id)
