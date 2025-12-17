@@ -1,5 +1,25 @@
-.venv/
+# Local env files (secrets)
+.env
+.env.local
+.env.*.local
+
+# Python
 __pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Local data/output from runs
 data/
 data_events/
+data_places/
 *.log
+
+# One-off local artifacts
+paws.html
+animals_page*.json
+
+# macOS
+.DS_Store
