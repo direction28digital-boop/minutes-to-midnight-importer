@@ -1,22 +1,24 @@
-name: M2M nightly imports
+name: M2M events imports
 
 on:
   schedule:
-    - cron: '0 9 * * *'
+    # Shallow refresh twice per day (UTC)
+    - cron: '15 7 * * *'
+    - cron: '15 19 * * *'
+    # Deep sweep weekly (Sunday, UTC)
+    - cron: '15 5 * * 0'
   workflow_dispatch: {}
 
-permissions:
-  contents: write
-
 concurrency:
-  group: m2m-nightly-imports
+  group: m2m-events-imports
   cancel-in-progress: false
 
 jobs:
-  imports:
+  events:
     runs-on: ubuntu-latest
     env:
       PYTHONUNBUFFERED: '1'
+      SERPAPI_THROTTLE_SECONDS: '0.25'
 
     steps:
       - name: Checkout repo
@@ -34,15 +36,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Choose crawl depth
+        id: depth
+        run: |
+          set -euo pipefail
+          MAX_PAGES="1"
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "${{ github.event.schedule }}" = "15 5 * * 0" ]; then
+            MAX_PAGES="5"
+          fi
+          echo "max_pages=$MAX_PAGES" >> "$GITHUB_OUTPUT"
+          echo "Using SERPAPI_MAX_PAGES=$MAX_PAGES"
+
       - name: Sanity-check required secrets
         env:
-          RG_API_KEY: ${{ secrets.RG_API_KEY }}
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
           WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
           WP_USER: ${{ secrets.WP_USER }}
           WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
         run: |
           set -euo pipefail
-          for v in RG_API_KEY WP_BASE_URL WP_USER WP_PASSWORD; do
+          for v in SERPAPI_API_KEY WP_BASE_URL WP_USER WP_PASSWORD; do
             if [ -z "${!v:-}" ]; then
               echo "Missing required secret: $v"
               exit 1
@@ -50,11 +63,12 @@ jobs:
           done
           echo "Secrets look present."
 
-      - name: Run RescueGroups importer
+      - name: Run SerpAPI events importer
         env:
-          RG_API_KEY: ${{ secrets.RG_API_KEY }}
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
           WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
           WP_USER: ${{ secrets.WP_USER }}
           WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
+          SERPAPI_MAX_PAGES: ${{ steps.depth.outputs.max_pages }}
         run: |
-          python rg_fetch_and_normalize_http.py
+          python events_fetch_and_normalize_serpapi.py

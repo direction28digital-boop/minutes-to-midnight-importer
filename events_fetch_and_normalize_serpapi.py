@@ -4,13 +4,52 @@ import os
 from pathlib import Path
 import json
 import re
+import time
 from datetime import datetime
 from typing import Any, Dict, TypedDict, List
 from collections import defaultdict
 
 import requests
 
-SERPAPI_BASE_URL = "https://serpapi.com/search"
+SERPAPI_BASE_URL = "https://serpapi.com/search.json"
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    raw = str(raw).strip()
+    if raw == "":
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    raw = str(raw).strip()
+    if raw == "":
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+# Controls search spend + runtime
+SERPAPI_MAX_PAGES = _env_int("SERPAPI_MAX_PAGES", 2)  # upper-bound searches per state/province
+SERPAPI_THROTTLE_SECONDS = _env_float("SERPAPI_THROTTLE_SECONDS", 0.25)
+
+# Optional batching across states/provinces (0 = process all)
+SERPAPI_STATE_BATCH_SIZE = _env_int("SERPAPI_STATE_BATCH_SIZE", 0)
+SERPAPI_STATE_BATCH_START = _env_int("SERPAPI_STATE_BATCH_START", 0)
+
+# Optional cap on WP upserts per run (0 = unlimited)
+WP_MAX_UPSERT_EVENTS = _env_int("WP_MAX_UPSERT_EVENTS", 0)
 
 # Safely read SerpApi key
 SERPAPI_API_KEY = os.environ.get("SERPAPI_API_KEY") or os.environ.get("SERPAPI_KEY")
@@ -18,7 +57,6 @@ if not SERPAPI_API_KEY:
     raise RuntimeError(
         "Missing SerpApi API key. Please set SERPAPI_API_KEY (or SERPAPI_KEY) in your environment."
     )
-
 
 WP_BASE_URL = os.environ["WP_BASE_URL"]
 WP_USER = os.environ["WP_USER"]
@@ -69,7 +107,7 @@ def slugify(text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# New: helpers to work at state or province level instead of per city
+# helpers to work at state or province level instead of per city
 # ---------------------------------------------------------------------------
 
 US_STATE_NAMES: Dict[str, str] = {
@@ -144,10 +182,6 @@ CA_PROVINCE_NAMES: Dict[str, str] = {
 
 
 def state_location_label(region_code: str, country_code: str) -> str:
-    """
-    Build a SerpApi location string like "Texas,United States" or "Ontario,Canada"
-    from a region (state/province) code and country code.
-    """
     region_code = (region_code or "").upper()
     country_code = (country_code or "").upper()
 
@@ -159,7 +193,6 @@ def state_location_label(region_code: str, country_code: str) -> str:
         name = CA_PROVINCE_NAMES.get(region_code, region_code)
         return f"{name},Canada"
 
-    # Fallback for other countries if you ever add them
     return f"{region_code},{country_code}"
 
 
@@ -170,17 +203,15 @@ def fetch_serpapi_events_for_state(
     region_code: str,
     country_code: str,
     api_key: str,
-    max_pages: int = 10,
+    max_pages: int = 2,
 ) -> List[Dict[str, Any]]:
-    """
-    Fetch events from SerpApi for a given state or province using the google_events engine.
-    Uses a generic dog friendly search query and a state level location.
-    Paginates through results using the "start" parameter.
-    """
     location = state_location_label(region_code, country_code)
     gl = "us" if country_code.upper() == "US" else "ca"
 
-    print(f"Fetching events for state/province {region_code}, {country_code} (location={location})")
+    print(
+        f"Fetching events for state/province {region_code}, {country_code} "
+        f"(location={location}, max_pages={max_pages})"
+    )
 
     all_events: List[Dict[str, Any]] = []
     start = 0
@@ -230,13 +261,16 @@ def fetch_serpapi_events_for_state(
 
         all_events.extend(events)
 
-        # google_events returns 10 results per page normally. If we get fewer,
+        # google_events returns ~10 results per page. If we get fewer,
         # assume we are at the end.
         if len(events) < 10:
             break
 
         start += 10
         page += 1
+
+        if SERPAPI_THROTTLE_SECONDS > 0:
+            time.sleep(SERPAPI_THROTTLE_SECONDS)
 
     print(f"Total {len(all_events)} raw events for {location}")
     return all_events
@@ -279,7 +313,6 @@ def is_dog_event(event: Dict[str, Any]) -> bool:
 
 # ---------------- Date parsing helpers for SerpApi google_events ----------------
 
-# Map short month names to month numbers (1–12)
 MONTH_INDEX: Dict[str, int] = {
     "jan": 1,
     "feb": 2,
@@ -296,35 +329,20 @@ MONTH_INDEX: Dict[str, int] = {
     "dec": 12,
 }
 
-# Treat events older than this many days (when no year is present)
-# as "definitely last year", otherwise assume current year.
 MAX_PAST_DAYS_NO_YEAR = 183  # about 6 months
 
 
 def _parse_month_day_year_like(text: str, now: datetime | None = None) -> datetime | None:
-    """
-    Parse strings like:
-      - "Dec 7"
-      - "Dec 7, 2025"
-      - "Sun, Dec 7, 12 – 3 PM"
-    into a datetime with a YEAR.
-
-    If year is missing we:
-      - assume the current year
-      - if that would be > ~6 months in the past, bump to next year.
-    """
     text = (text or "").strip()
     if not text:
         return None
 
-    # Try ISO first (sometimes a full date is already present)
     try:
         dt = datetime.fromisoformat(text)
         return dt
     except Exception:
         pass
 
-    # Look for "Dec 7" or "Dec 7, 2025" style patterns
     m = re.search(r"([A-Za-z]{3,9})\s+(\d{1,2})(?:,\s*(\d{4}))?", text)
     if not m:
         return None
@@ -347,8 +365,6 @@ def _parse_month_day_year_like(text: str, now: datetime | None = None) -> dateti
     if year_str:
         year = int(year_str)
     else:
-        # No explicit year: assume this year, but if that would be
-        # "way in the past" (> MAX_PAST_DAYS_NO_YEAR) then treat as next year.
         year = today.year
         candidate_date = datetime(year, month, day).date()
         diff_days = (candidate_date - today).days
@@ -356,17 +372,12 @@ def _parse_month_day_year_like(text: str, now: datetime | None = None) -> dateti
             year = today.year + 1
 
     try:
-        # Noon time to avoid timezone surprises; UI mostly cares about the date.
         return datetime(year, month, day, 12, 0, 0)
     except Exception:
         return None
 
 
 def get_serpapi_start_end_iso(raw: Dict[str, Any]) -> tuple[str, str]:
-    """
-    Given a raw SerpApi event dict, return (start_iso, end_iso) strings
-    with a real year, suitable for frontend parsing.
-    """
     when = raw.get("date") or {}
     if not isinstance(when, dict):
         when = {}
@@ -377,7 +388,6 @@ def get_serpapi_start_end_iso(raw: Dict[str, Any]) -> tuple[str, str]:
 
     now = datetime.utcnow()
 
-    # Prefer explicit start_date, fall back to "when" text
     start_source = start_raw or when_raw
     end_source = end_raw or ""
 
@@ -396,11 +406,6 @@ LOCATION_LINE_RE = re.compile(
 
 
 def extract_location_from_event(raw: Dict[str, Any], fallback_region: Region | None) -> tuple[str, str, str, str, str]:
-    """
-    Try to parse city, region/state code and zip from the event's address.
-    Falls back to the passed region if parsing fails.
-    Returns (city, region_code, country_code, address_line1, postal_code).
-    """
     address = raw.get("address") or ""
     address_line1 = ""
 
@@ -438,20 +443,11 @@ def extract_location_from_event(raw: Dict[str, Any], fallback_region: Region | N
 
 
 def normalize_event(raw: Dict[str, Any], region: Region | None) -> Dict[str, Any]:
-    """
-    Convert a raw SerpApi event into our NormalizedEvent shape.
-    Uses get_serpapi_start_end_iso so that month/day strings like "Dec 7"
-    get a correct year rather than defaulting to 2001.
-    Location (city, regionCode, postalCode) is taken from the event address,
-    with the provided region only as a fallback.
-    """
     title = raw.get("title") or ""
     description = raw.get("description") or ""
     venue = raw.get("venue", {}) or {}
 
-    # Use our smarter parser for start/end times
     start_iso, end_iso = get_serpapi_start_end_iso(raw)
-
     city, region_code, country_code, address_line1, postal_code = extract_location_from_event(raw, region)
 
     link = raw.get("link") or raw.get("event_url") or ""
@@ -482,9 +478,6 @@ def normalize_event(raw: Dict[str, Any], region: Region | None) -> Dict[str, Any
 
 
 def write_normalized_events(events: List[Dict[str, Any]]) -> Path:
-    """
-    Write all normalized events to a JSONL file, one JSON object per line.
-    """
     with OUTPUT_EVENTS_PATH.open("w", encoding="utf-8") as out:
         for ev in events:
             out.write(json.dumps(ev, ensure_ascii=False) + "\n")
@@ -492,22 +485,13 @@ def write_normalized_events(events: List[Dict[str, Any]]) -> Path:
 
 
 def is_future_event(raw: Dict[str, Any]) -> bool:
-    """
-    Return True if the event's start date is today or later.
-
-    Uses the same parsing logic as normalization so that strings like
-    "Dec 7" get a sensible year. If we cannot parse at all, we keep
-    the event rather than risk dropping good data.
-    """
     start_iso, _ = get_serpapi_start_end_iso(raw)
     if not start_iso:
-        # No usable date; keep the event
         return True
 
     try:
         dt = datetime.fromisoformat(start_iso)
     except Exception:
-        # If parsing fails here, keep the event
         return True
 
     today = datetime.utcnow().date()
@@ -585,27 +569,37 @@ def main() -> None:
     regions = load_regions()
     print(f"Loaded {len(regions)} regions")
 
-    # Group regions by (regionCode, countryCode) so we fetch SerpApi once per state/province
     regions_by_state: Dict[tuple[str, str], List[Region]] = defaultdict(list)
     for region in regions:
         key = (region["regionCode"], region["countryCode"])
         regions_by_state[key].append(region)
 
-    print(f"Found {len(regions_by_state)} unique state/province keys")
+    all_state_keys = sorted(regions_by_state.keys(), key=lambda k: (k[1], k[0]))
+    print(f"Found {len(all_state_keys)} unique state/province keys")
+
+    state_keys = all_state_keys
+    if SERPAPI_STATE_BATCH_SIZE and len(all_state_keys) > 0:
+        start = SERPAPI_STATE_BATCH_START % len(all_state_keys)
+        rotated = all_state_keys[start:] + all_state_keys[:start]
+        state_keys = rotated[:SERPAPI_STATE_BATCH_SIZE]
+
+    print(
+        f"Processing {len(state_keys)} state/province keys with SERPAPI_MAX_PAGES={SERPAPI_MAX_PAGES}. "
+        f"Upper-bound searches this run: {len(state_keys) * max(SERPAPI_MAX_PAGES, 0)}"
+    )
 
     all_normalized: List[Dict[str, Any]] = []
 
-    for (region_code, country_code), region_group in regions_by_state.items():
-        # Use the first region in the group as a fallback location if parsing fails
+    for (region_code, country_code) in state_keys:
+        region_group = regions_by_state[(region_code, country_code)]
         fallback_region = region_group[0]
 
         raw_events = fetch_serpapi_events_for_state(
             region_code=region_code,
             country_code=country_code,
             api_key=SERPAPI_API_KEY,
+            max_pages=max(SERPAPI_MAX_PAGES, 0),
         )
-
-        print(f"Got {len(raw_events)} raw events for state/province {region_code}, {country_code}")
 
         for ev in raw_events:
             if not is_dog_event(ev):
@@ -619,10 +613,30 @@ def main() -> None:
         print("No normalized events, nothing to write or upsert.")
         return
 
-    output_path = write_normalized_events(all_normalized)
+    # Dedupe by m2mId and sort by soonest startDateTime first
+    dedup: Dict[str, Dict[str, Any]] = {}
+    for ev in all_normalized:
+        mid = str(ev.get("m2mId") or "")
+        if not mid:
+            continue
+        if mid not in dedup:
+            dedup[mid] = ev
+
+    normalized_list = list(dedup.values())
+
+    def _sort_key(ev: Dict[str, Any]) -> str:
+        s = str(ev.get("startDateTime") or "")
+        return s if s else "9999-12-31T23:59:59"
+
+    normalized_list.sort(key=_sort_key)
+
+    if WP_MAX_UPSERT_EVENTS and WP_MAX_UPSERT_EVENTS > 0:
+        normalized_list = normalized_list[:WP_MAX_UPSERT_EVENTS]
+        print(f"WP_MAX_UPSERT_EVENTS={WP_MAX_UPSERT_EVENTS} -> upserting {len(normalized_list)} events")
+
+    output_path = write_normalized_events(normalized_list)
     print(f"Normalized events written to {output_path}")
 
-    # You can use max_count=10 while testing if you want
     upsert_events_to_wp(output_path, max_count=None)
 
 
