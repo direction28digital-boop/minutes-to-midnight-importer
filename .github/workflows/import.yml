@@ -6,24 +6,62 @@ on:
     - cron: '0 9 * * *'
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
+concurrency:
+  group: m2m-nightly-imports
+  cancel-in-progress: false
+
 jobs:
   imports:
     runs-on: ubuntu-latest
+    env:
+      PYTHONUNBUFFERED: '1'
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Set up Python
-        # Use the same Python version you used locally
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      # Fail fast if any required secret is missing (saves you 5 hours)
+      - name: Sanity-check required secrets
+        env:
+          RG_API_KEY: ${{ secrets.RG_API_KEY }}
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for v in RG_API_KEY SERPAPI_API_KEY WP_BASE_URL WP_USER WP_PASSWORD; do
+            if [ -z "${!v:-}" ]; then
+              echo "Missing required secret: $v"
+              exit 1
+            fi
+          done
+          echo "Secrets look present."
+
+      # Run events ONCE (prevents double-spending SerpAPI)
+      - name: Run SerpAPI events importer
+        env:
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
+        run: |
+          python events_fetch_and_normalize_serpapi.py
 
       - name: Run RescueGroups importer
         env:
@@ -33,21 +71,3 @@ jobs:
           WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
         run: |
           python rg_fetch_and_normalize_http.py
-
-      - name: Run SerpApi events importer
-        env:
-          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
-          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
-          WP_USER: ${{ secrets.WP_USER }}
-          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
-        run: |
-          python events_fetch_and_normalize_serpapi.py
-
-      - name: Import SerpApi events
-        run: |
-          python events_fetch_and_normalize_serpapi.py
-        env:
-          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
-          WP_USER: ${{ secrets.WP_USER }}
-          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
