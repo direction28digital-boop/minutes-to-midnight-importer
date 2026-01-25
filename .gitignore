@@ -23,3 +23,9 @@ animals_page*.json
 
 # macOS
 .DS_Store
+
+# Local scratch scripts (do not commit)
+debug_rg_photos.py
+events-by-city.py
+events_by_hub.py
+places_prefill.py
