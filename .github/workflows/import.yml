@@ -2,7 +2,6 @@ name: M2M nightly imports
 
 on:
   schedule:
-    # Runs every day at 09:00 UTC (2 AM Phoenix time; adjust as needed)
     - cron: '0 9 * * *'
   workflow_dispatch: {}
 
@@ -35,33 +34,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Fail fast if any required secret is missing (saves you 5 hours)
       - name: Sanity-check required secrets
         env:
           RG_API_KEY: ${{ secrets.RG_API_KEY }}
-          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
           WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
           WP_USER: ${{ secrets.WP_USER }}
           WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
         run: |
           set -euo pipefail
-          for v in RG_API_KEY SERPAPI_API_KEY WP_BASE_URL WP_USER WP_PASSWORD; do
+          for v in RG_API_KEY WP_BASE_URL WP_USER WP_PASSWORD; do
             if [ -z "${!v:-}" ]; then
               echo "Missing required secret: $v"
               exit 1
             fi
           done
           echo "Secrets look present."
-
-      # Run events ONCE (prevents double-spending SerpAPI)
-      - name: Run SerpAPI events importer
-        env:
-          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
-          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
-          WP_USER: ${{ secrets.WP_USER }}
-          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
-        run: |
-          python events_fetch_and_normalize_serpapi.py
 
       - name: Run RescueGroups importer
         env:
