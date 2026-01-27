@@ -7,7 +7,20 @@ on:
     - cron: '15 19 * * *'
     # Deep sweep weekly (Sunday, UTC)
     - cron: '15 5 * * 0'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      max_pages:
+        description: "Override SERPAPI_MAX_PAGES for this run. Example: 1 (shallow), 5 (deep), 9-10 (burn). Leave blank to use schedule default."
+        required: false
+        default: ""
+      wp_max_upsert_events:
+        description: "Cap events upserted to WordPress (0 = unlimited). Recommended: 1500 during burn."
+        required: false
+        default: "1500"
+      throttle_seconds:
+        description: "Delay between SerpAPI requests (seconds)."
+        required: false
+        default: "0.25"
 
 concurrency:
   group: m2m-events-imports
@@ -18,7 +31,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTHONUNBUFFERED: '1'
-      SERPAPI_THROTTLE_SECONDS: '0.25'
 
     steps:
       - name: Checkout repo
@@ -36,16 +48,41 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Choose crawl depth
-        id: depth
+      - name: Choose crawl settings
+        id: settings
         run: |
           set -euo pipefail
+
+          # defaults for scheduled runs
           MAX_PAGES="1"
+          WP_MAX="1500"
+          THROTTLE="0.25"
+
+          # weekly scheduled deep sweep
           if [ "${{ github.event_name }}" = "schedule" ] && [ "${{ github.event.schedule }}" = "15 5 * * 0" ]; then
             MAX_PAGES="5"
           fi
+
+          # workflow_dispatch overrides (optional)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ github.event.inputs.max_pages }}" ]; then
+              MAX_PAGES="${{ github.event.inputs.max_pages }}"
+            fi
+            if [ -n "${{ github.event.inputs.wp_max_upsert_events }}" ]; then
+              WP_MAX="${{ github.event.inputs.wp_max_upsert_events }}"
+            fi
+            if [ -n "${{ github.event.inputs.throttle_seconds }}" ]; then
+              THROTTLE="${{ github.event.inputs.throttle_seconds }}"
+            fi
+          fi
+
           echo "max_pages=$MAX_PAGES" >> "$GITHUB_OUTPUT"
+          echo "wp_max=$WP_MAX" >> "$GITHUB_OUTPUT"
+          echo "throttle=$THROTTLE" >> "$GITHUB_OUTPUT"
+
           echo "Using SERPAPI_MAX_PAGES=$MAX_PAGES"
+          echo "Using WP_MAX_UPSERT_EVENTS=$WP_MAX"
+          echo "Using SERPAPI_THROTTLE_SECONDS=$THROTTLE"
 
       - name: Sanity-check required secrets
         env:
@@ -69,6 +106,8 @@ jobs:
           WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
           WP_USER: ${{ secrets.WP_USER }}
           WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
-          SERPAPI_MAX_PAGES: ${{ steps.depth.outputs.max_pages }}
+          SERPAPI_MAX_PAGES: ${{ steps.settings.outputs.max_pages }}
+          WP_MAX_UPSERT_EVENTS: ${{ steps.settings.outputs.wp_max }}
+          SERPAPI_THROTTLE_SECONDS: ${{ steps.settings.outputs.throttle }}
         run: |
           python events_fetch_and_normalize_serpapi.py
