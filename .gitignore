@@ -13,9 +13,16 @@ venv/
 
 # Local data/output from runs
 data/
-data_events/
 data_places/
 *.log
+
+# Ignore all event outputs…
+data_events/**
+
+# …but DO track the hub lists used by GitHub Actions
+!data_events/
+!data_events/cities.events.us.json
+!data_events/cities.events.ca.json
 
 # One-off local artifacts
 paws.html
