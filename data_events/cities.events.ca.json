@@ -1,0 +1,182 @@
+[
+  {
+    "hubId": "vancouver-bc",
+    "city": "Vancouver",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "toronto-on",
+    "city": "Toronto",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "montreal-qc",
+    "city": "Montreal",
+    "regionCode": "QC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "calgary-ab",
+    "city": "Calgary",
+    "regionCode": "AB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "ottawa-on",
+    "city": "Ottawa",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "victoria-bc",
+    "city": "Victoria",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "winnipeg-mb",
+    "city": "Winnipeg",
+    "regionCode": "MB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "quebec-city-qc",
+    "city": "Quebec City",
+    "regionCode": "QC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "halifax-ns",
+    "city": "Halifax",
+    "regionCode": "NS",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "edmonton-ab",
+    "city": "Edmonton",
+    "regionCode": "AB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "saskatoon-sk",
+    "city": "Saskatoon",
+    "regionCode": "SK",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "kelowna-bc",
+    "city": "Kelowna",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "whistler-bc",
+    "city": "Whistler",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "canmore-ab",
+    "city": "Canmore",
+    "regionCode": "AB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "squamish-bc",
+    "city": "Squamish",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "kingston-on",
+    "city": "Kingston",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "maple-ridge-bc",
+    "city": "Maple Ridge",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "fredericton-nb",
+    "city": "Fredericton",
+    "regionCode": "NB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "charlottetown-pe",
+    "city": "Charlottetown",
+    "regionCode": "PE",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "kawartha-lakes-on",
+    "city": "Kawartha Lakes",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "revelstoke-bc",
+    "city": "Revelstoke",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "mont-tremblant-qc",
+    "city": "Mont-Tremblant",
+    "regionCode": "QC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "banff-ab",
+    "city": "Banff",
+    "regionCode": "AB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "hamilton-on",
+    "city": "Hamilton",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "london-on",
+    "city": "London",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "mississauga-on",
+    "city": "Mississauga",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "guelph-on",
+    "city": "Guelph",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "st-johns-nl",
+    "city": "St. John's",
+    "regionCode": "NL",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "whitehorse-yt",
+    "city": "Whitehorse",
+    "regionCode": "YT",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "robinsons-nl",
+    "city": "Robinsons",
+    "regionCode": "NL",
+    "countryCode": "CA"
+  }
+]
