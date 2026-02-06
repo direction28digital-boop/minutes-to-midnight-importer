@@ -36,3 +36,7 @@ debug_rg_photos.py
 events-by-city.py
 events_by_hub.py
 places_prefill.py
+
+
+# SerpAPI run logs / manifests
+data_events/dataRan/serpapi_runs/

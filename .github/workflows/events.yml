@@ -2,112 +2,63 @@ name: M2M events imports
 
 on:
   schedule:
-    # Shallow refresh twice per day (UTC)
-    - cron: '15 7 * * *'
-    - cron: '15 19 * * *'
-    # Deep sweep weekly (Sunday, UTC)
-    - cron: '15 5 * * 0'
+    # Runs daily at 09:20 America/Phoenix (Phoenix = UTC-7 year-round)
+    - cron: '20 16 * * *'
   workflow_dispatch:
     inputs:
-      max_pages:
-        description: "Override SERPAPI_MAX_PAGES for this run. Example: 1 (shallow), 5 (deep), 9-10 (burn). Leave blank to use schedule default."
+      daily_cap:
+        description: 'How many SerpAPI searches to run this execution'
         required: false
-        default: ""
-      wp_max_upsert_events:
-        description: "Cap events upserted to WordPress (0 = unlimited). Recommended: 1500 during burn."
+        default: '200'
+      dry_run:
+        description: 'Set to 1 to test without spending credits'
         required: false
-        default: "1500"
-      throttle_seconds:
-        description: "Delay between SerpAPI requests (seconds)."
-        required: false
-        default: "0.25"
+        default: '0'
 
 concurrency:
-  group: m2m-events-imports
+  group: serpapi-events-daily
   cancel-in-progress: false
 
 jobs:
-  events:
+  run:
     runs-on: ubuntu-latest
-    env:
-      PYTHONUNBUFFERED: '1'
+    timeout-minutes: 60
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: requirements.txt
 
-      - name: Install dependencies
+      - name: Create venv + install deps
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m venv .venv-events
+          ./.venv-events/bin/python -m pip install --upgrade pip
+          ./.venv-events/bin/python -m pip install requests
 
-      - name: Choose crawl settings
-        id: settings
-        run: |
-          set -euo pipefail
-
-          # defaults for scheduled runs
-          MAX_PAGES="1"
-          WP_MAX="1500"
-          THROTTLE="0.25"
-
-          # weekly scheduled deep sweep
-          if [ "${{ github.event_name }}" = "schedule" ] && [ "${{ github.event.schedule }}" = "15 5 * * 0" ]; then
-            MAX_PAGES="5"
-          fi
-
-          # workflow_dispatch overrides (optional)
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            if [ -n "${{ github.event.inputs.max_pages }}" ]; then
-              MAX_PAGES="${{ github.event.inputs.max_pages }}"
-            fi
-            if [ -n "${{ github.event.inputs.wp_max_upsert_events }}" ]; then
-              WP_MAX="${{ github.event.inputs.wp_max_upsert_events }}"
-            fi
-            if [ -n "${{ github.event.inputs.throttle_seconds }}" ]; then
-              THROTTLE="${{ github.event.inputs.throttle_seconds }}"
-            fi
-          fi
-
-          echo "max_pages=$MAX_PAGES" >> "$GITHUB_OUTPUT"
-          echo "wp_max=$WP_MAX" >> "$GITHUB_OUTPUT"
-          echo "throttle=$THROTTLE" >> "$GITHUB_OUTPUT"
-
-          echo "Using SERPAPI_MAX_PAGES=$MAX_PAGES"
-          echo "Using WP_MAX_UPSERT_EVENTS=$WP_MAX"
-          echo "Using SERPAPI_THROTTLE_SECONDS=$THROTTLE"
-
-      - name: Sanity-check required secrets
+      - name: Run capped SerpAPI fetch
         env:
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
-          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
-          WP_USER: ${{ secrets.WP_USER }}
-          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
+          DAILY_CAP: ${{ github.event.inputs.daily_cap || '200' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
         run: |
-          set -euo pipefail
-          for v in SERPAPI_API_KEY WP_BASE_URL WP_USER WP_PASSWORD; do
-            if [ -z "${!v:-}" ]; then
-              echo "Missing required secret: $v"
-              exit 1
-            fi
-          done
-          echo "Secrets look present."
+          chmod +x scripts/serpapi_run_with_daily_cap.sh
+          ./scripts/serpapi_run_with_daily_cap.sh
 
-      - name: Run SerpAPI events importer
-        env:
-          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
-          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
-          WP_USER: ${{ secrets.WP_USER }}
-          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
-          SERPAPI_MAX_PAGES: ${{ steps.settings.outputs.max_pages }}
-          WP_MAX_UPSERT_EVENTS: ${{ steps.settings.outputs.wp_max }}
-          SERPAPI_THROTTLE_SECONDS: ${{ steps.settings.outputs.throttle }}
+      - name: Normalize (optional but useful)
         run: |
-          python events_fetch_and_normalize_serpapi.py
+          python3 scripts/normalize_serpapi_google_events.py \
+            --in-glob "data_events/raw/**/*.jsonl" \
+            --out "data_events/events.normalized.jsonl"
+
+      - name: Upload normalized + run manifests (artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: events-normalized-and-manifests
+          path: |
+            data_events/events.normalized.jsonl
+            data_events/dataRan/serpapi_runs/*.json
+          if-no-files-found: ignore
