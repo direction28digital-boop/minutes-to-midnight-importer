@@ -2,18 +2,18 @@ name: M2M events imports
 
 on:
   schedule:
-    # Runs daily at 09:20 America/Phoenix (Phoenix = UTC-7 year-round)
-    - cron: '20 16 * * *'
+    # Runs daily at 09:20 America/Phoenix (UTC-7 year-round)
+    - cron: "20 16 * * *"
   workflow_dispatch:
     inputs:
       daily_cap:
-        description: 'How many SerpAPI searches to run this execution'
+        description: "How many SerpAPI searches to run this execution"
         required: false
-        default: '200'
+        default: "200"
       dry_run:
-        description: 'Set to 1 to test without spending credits'
+        description: "Set to 1 to test without spending credits"
         required: false
-        default: '0'
+        default: "0"
 
 concurrency:
   group: serpapi-events-daily
@@ -31,26 +31,35 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Create venv + install deps
+        shell: bash
         run: |
           python -m venv .venv-events
           ./.venv-events/bin/python -m pip install --upgrade pip
           ./.venv-events/bin/python -m pip install requests
 
       - name: Run capped SerpAPI fetch
+        shell: bash
         env:
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
-          DAILY_CAP: ${{ github.event.inputs.daily_cap || '200' }}
-          DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
+          # Safe defaults for schedule runs; inputs for manual runs
+          DAILY_CAP: ${{ github.event_name == 'workflow_dispatch' && inputs.daily_cap || '200' }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || '0' }}
         run: |
+          set -euo pipefail
+          echo "event_name=${{ github.event_name }}"
+          echo "DAILY_CAP=$DAILY_CAP"
+          echo "DRY_RUN=$DRY_RUN"
           chmod +x scripts/serpapi_run_with_daily_cap.sh
           ./scripts/serpapi_run_with_daily_cap.sh
 
       - name: Normalize (optional but useful)
+        shell: bash
         run: |
-          python3 scripts/normalize_serpapi_google_events.py \
+          set -euo pipefail
+          ./.venv-events/bin/python scripts/normalize_serpapi_google_events.py \
             --in-glob "data_events/raw/**/*.jsonl" \
             --out "data_events/events.normalized.jsonl"
 
