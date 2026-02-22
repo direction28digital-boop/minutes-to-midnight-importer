@@ -75,9 +75,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./.venv-events/bin/python scripts/normalize_serpapi_google_events.py \
-            --in-glob "data_events/raw/**/*.jsonl" \
-            --out "data_events/events.normalized.jsonl"
+
+          if compgen -G "data_events/raw/**/*.jsonl" > /dev/null; then
+            echo "Found raw input files. Running normalize."
+            ./.venv-events/bin/python scripts/normalize_serpapi_google_events.py \
+              --in-glob "data_events/raw/**/*.jsonl" \
+              --out "data_events/events.normalized.jsonl"
+          else
+            echo "No raw event files found at data_events/raw/**/*.jsonl. Skipping normalize."
+          fi
 
       - name: Upload normalized + run manifests (artifacts)
         uses: actions/upload-artifact@v4
