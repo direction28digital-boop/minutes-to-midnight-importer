@@ -33,9 +33,21 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Debug repo layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          pwd
+          ls -la
+          echo "---- scripts ----"
+          ls -la scripts || true
+          echo "---- data_events ----"
+          ls -la data_events || true
+
       - name: Create venv + install deps
         shell: bash
         run: |
+          set -euo pipefail
           python -m venv .venv-events
           ./.venv-events/bin/python -m pip install --upgrade pip
           ./.venv-events/bin/python -m pip install requests
@@ -44,7 +56,6 @@ jobs:
         shell: bash
         env:
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
-          # Safe defaults for schedule runs; inputs for manual runs
           DAILY_CAP: ${{ github.event_name == 'workflow_dispatch' && inputs.daily_cap || '200' }}
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || '0' }}
         run: |
@@ -52,6 +63,11 @@ jobs:
           echo "event_name=${{ github.event_name }}"
           echo "DAILY_CAP=$DAILY_CAP"
           echo "DRY_RUN=$DRY_RUN"
+          if [[ -z "${SERPAPI_API_KEY:-}" ]]; then
+            echo "SERPAPI_API_KEY is missing (repo secret not set for this repo/environment)."
+            exit 2
+          fi
+          test -f scripts/serpapi_run_with_daily_cap.sh || { echo "Missing scripts/serpapi_run_with_daily_cap.sh"; exit 2; }
           chmod +x scripts/serpapi_run_with_daily_cap.sh
           ./scripts/serpapi_run_with_daily_cap.sh
 
