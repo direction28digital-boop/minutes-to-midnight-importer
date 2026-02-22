@@ -9,7 +9,7 @@ on:
       daily_cap:
         description: "How many SerpAPI searches to run this execution"
         required: false
-        default: "30"
+        default: "32"
       dry_run:
         description: "Set to 1 to test without spending credits"
         required: false
