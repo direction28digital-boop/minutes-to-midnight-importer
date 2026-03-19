@@ -2,14 +2,17 @@ name: M2M events imports
 
 on:
   schedule:
-    # Runs daily at 09:20 America/Phoenix (UTC-7 year-round)
-    - cron: "20 16 * * *"
+    # 3x daily to burn through 1000 SerpAPI searches by 2026-03-26
+    # Phoenix = UTC-7 year-round
+    - cron: "20 13 * * *"   # 06:20 Phoenix (morning)
+    - cron: "20 18 * * *"   # 11:20 Phoenix (midday)
+    - cron: "20 23 * * *"   # 16:20 Phoenix (afternoon)
   workflow_dispatch:
     inputs:
       daily_cap:
         description: "How many SerpAPI searches to run this execution"
         required: false
-        default: "32"
+        default: "50"
       dry_run:
         description: "Set to 1 to test without spending credits"
         required: false
@@ -56,8 +59,18 @@ jobs:
         shell: bash
         env:
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
-          DAILY_CAP: ${{ github.event_name == 'workflow_dispatch' && inputs.daily_cap || '200' }}
+          DAILY_CAP: ${{ github.event_name == 'workflow_dispatch' && inputs.daily_cap || '50' }}
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || '0' }}
+          # Expanded terms & filters to create enough unique task IDs for 3 runs/day
+          TERMS: >-
+            dog friendly events,dog adoption event,pet adoption event,
+            dog rescue fundraiser,pet friendly festival,dog meetup
+          DATE_FILTERS: >-
+            date:today,date:tomorrow,date:week,date:next_week,date:month,date:next_month
+          # Two pagination offsets doubles unique tasks per hub
+          STARTS: "0,10"
+          # Faster throttle to finish each run quickly
+          THROTTLE: "2.0"
         run: |
           set -euo pipefail
           echo "event_name=${{ github.event_name }}"
