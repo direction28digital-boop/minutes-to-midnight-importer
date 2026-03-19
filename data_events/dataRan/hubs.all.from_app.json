@@ -1,0 +1,1238 @@
+[
+  {
+    "hubId": "calgary",
+    "city": "Calgary",
+    "regionCode": "AB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "edmonton",
+    "city": "Edmonton",
+    "regionCode": "AB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "lethbridge",
+    "city": "Lethbridge",
+    "regionCode": "AB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "red-deer",
+    "city": "Red Deer",
+    "regionCode": "AB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "abbotsford-mission",
+    "city": "Abbotsford",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "chilliwack",
+    "city": "Chilliwack",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "kamloops",
+    "city": "Kamloops",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "kelowna",
+    "city": "Kelowna",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "nanaimo",
+    "city": "Nanaimo",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "prince-george",
+    "city": "Prince George",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "vancouver-ca",
+    "city": "Vancouver",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "victoria",
+    "city": "Victoria",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "brandon",
+    "city": "Brandon",
+    "regionCode": "MB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "winnipeg",
+    "city": "Winnipeg",
+    "regionCode": "MB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "fredericton",
+    "city": "Fredericton",
+    "regionCode": "NB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "moncton",
+    "city": "Moncton",
+    "regionCode": "NB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "saint-john-nb",
+    "city": "Saint John",
+    "regionCode": "NB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "st-johns-nl",
+    "city": "St. John's",
+    "regionCode": "NL",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "halifax",
+    "city": "Halifax",
+    "regionCode": "NS",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "sydney-ns",
+    "city": "Sydney",
+    "regionCode": "NS",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "barrie",
+    "city": "Barrie",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "guelph",
+    "city": "Guelph",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "hamilton",
+    "city": "Hamilton",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "kingston-on",
+    "city": "Kingston",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "kitchener-waterloo",
+    "city": "Kitchener",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "london-on",
+    "city": "London",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "north-bay",
+    "city": "North Bay",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "oshawa",
+    "city": "Oshawa",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "ottawa-gatineau",
+    "city": "Ottawa",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "peterborough-on",
+    "city": "Peterborough",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "sault-ste-marie",
+    "city": "Sault Ste. Marie",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "st-catharines-niagara",
+    "city": "St. Catharines",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "sudbury",
+    "city": "Sudbury",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "thunder-bay",
+    "city": "Thunder Bay",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "toronto",
+    "city": "Toronto",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "windsor",
+    "city": "Windsor",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "charlottetown",
+    "city": "Charlottetown",
+    "regionCode": "PE",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "montreal",
+    "city": "Montreal",
+    "regionCode": "QC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "quebec-city",
+    "city": "Quebec City",
+    "regionCode": "QC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "saguenay",
+    "city": "Saguenay",
+    "regionCode": "QC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "sherbrooke",
+    "city": "Sherbrooke",
+    "regionCode": "QC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "trois-rivieres",
+    "city": "Trois-Rivières",
+    "regionCode": "QC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "regina",
+    "city": "Regina",
+    "regionCode": "SK",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "saskatoon",
+    "city": "Saskatoon",
+    "regionCode": "SK",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "anchorage",
+    "city": "Anchorage",
+    "regionCode": "AK",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "fairbanks",
+    "city": "Fairbanks",
+    "regionCode": "AK",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "birmingham",
+    "city": "Birmingham",
+    "regionCode": "AL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "huntsville",
+    "city": "Huntsville",
+    "regionCode": "AL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "mobile",
+    "city": "Mobile",
+    "regionCode": "AL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "little-rock",
+    "city": "Little Rock",
+    "regionCode": "AR",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "flagstaff",
+    "city": "Flagstaff",
+    "regionCode": "AZ",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "phoenix",
+    "city": "Phoenix",
+    "regionCode": "AZ",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "tucson",
+    "city": "Tucson",
+    "regionCode": "AZ",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "yuma",
+    "city": "Yuma",
+    "regionCode": "AZ",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "bakersfield",
+    "city": "Bakersfield",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "fresno",
+    "city": "Fresno",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "los-angeles",
+    "city": "Los Angeles",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "modesto",
+    "city": "Modesto",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "monterey",
+    "city": "Monterey",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "palm-springs",
+    "city": "Palm Springs",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "redding",
+    "city": "Redding",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "riverside",
+    "city": "Riverside",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "sacramento",
+    "city": "Sacramento",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "san-diego",
+    "city": "San Diego",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "san-francisco",
+    "city": "San Francisco",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "san-jose",
+    "city": "San Jose",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "san-luis-obispo",
+    "city": "San Luis Obispo",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "santa-barbara",
+    "city": "Santa Barbara",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "santa-cruz",
+    "city": "Santa Cruz",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "santa-rosa",
+    "city": "Santa Rosa",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "stockton",
+    "city": "Stockton",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "ventura",
+    "city": "Ventura",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "colorado-springs",
+    "city": "Colorado Springs",
+    "regionCode": "CO",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "denver",
+    "city": "Denver",
+    "regionCode": "CO",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "fort-collins",
+    "city": "Fort Collins",
+    "regionCode": "CO",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "grand-junction",
+    "city": "Grand Junction",
+    "regionCode": "CO",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "pueblo",
+    "city": "Pueblo",
+    "regionCode": "CO",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "hartford",
+    "city": "Hartford",
+    "regionCode": "CT",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "stamford",
+    "city": "Stamford",
+    "regionCode": "CT",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "washington-dc",
+    "city": "Washington",
+    "regionCode": "DC",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "wilmington-de",
+    "city": "Wilmington",
+    "regionCode": "DE",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "daytona-beach",
+    "city": "Daytona Beach",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "fort-myers",
+    "city": "Fort Myers",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "gainesville-fl",
+    "city": "Gainesville",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "jacksonville",
+    "city": "Jacksonville",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "miami-fort-lauderdale",
+    "city": "Miami",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "orlando",
+    "city": "Orlando",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "pensacola",
+    "city": "Pensacola",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "tallahassee",
+    "city": "Tallahassee",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "tampa-bay",
+    "city": "Tampa",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "west-palm-beach",
+    "city": "West Palm Beach",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "atlanta",
+    "city": "Atlanta",
+    "regionCode": "GA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "augusta",
+    "city": "Augusta",
+    "regionCode": "GA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "honolulu",
+    "city": "Honolulu",
+    "regionCode": "HI",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "cedar-rapids",
+    "city": "Cedar Rapids",
+    "regionCode": "IA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "quad-cities",
+    "city": "Davenport",
+    "regionCode": "IA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "des-moines",
+    "city": "Des Moines",
+    "regionCode": "IA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "sioux-city",
+    "city": "Sioux City",
+    "regionCode": "IA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "boise",
+    "city": "Boise",
+    "regionCode": "ID",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "idaho-falls",
+    "city": "Idaho Falls",
+    "regionCode": "ID",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "champaign-urbana",
+    "city": "Champaign",
+    "regionCode": "IL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "chicago",
+    "city": "Chicago",
+    "regionCode": "IL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "peoria",
+    "city": "Peoria",
+    "regionCode": "IL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "rockford",
+    "city": "Rockford",
+    "regionCode": "IL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "fort-wayne",
+    "city": "Fort Wayne",
+    "regionCode": "IN",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "indianapolis",
+    "city": "Indianapolis",
+    "regionCode": "IN",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "south-bend",
+    "city": "South Bend",
+    "regionCode": "IN",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "wichita",
+    "city": "Wichita",
+    "regionCode": "KS",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "baton-rouge",
+    "city": "Baton Rouge",
+    "regionCode": "LA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "lafayette-la",
+    "city": "Lafayette",
+    "regionCode": "LA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "new-orleans",
+    "city": "New Orleans",
+    "regionCode": "LA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "shreveport",
+    "city": "Shreveport",
+    "regionCode": "LA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "boston-providence",
+    "city": "Boston",
+    "regionCode": "MA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "springfield-ma",
+    "city": "Springfield",
+    "regionCode": "MA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "worcester",
+    "city": "Worcester",
+    "regionCode": "MA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "baltimore",
+    "city": "Baltimore",
+    "regionCode": "MD",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "bangor",
+    "city": "Bangor",
+    "regionCode": "ME",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "portland-me",
+    "city": "Portland",
+    "regionCode": "ME",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "ann-arbor",
+    "city": "Ann Arbor",
+    "regionCode": "MI",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "detroit",
+    "city": "Detroit",
+    "regionCode": "MI",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "grand-rapids",
+    "city": "Grand Rapids",
+    "regionCode": "MI",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "kalamazoo",
+    "city": "Kalamazoo",
+    "regionCode": "MI",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "lansing",
+    "city": "Lansing",
+    "regionCode": "MI",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "minneapolis-st-paul",
+    "city": "Minneapolis",
+    "regionCode": "MN",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "kansas-city",
+    "city": "Kansas City",
+    "regionCode": "MO",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "st-louis",
+    "city": "St. Louis",
+    "regionCode": "MO",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "gulfport-biloxi",
+    "city": "Gulfport",
+    "regionCode": "MS",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "jackson-ms",
+    "city": "Jackson",
+    "regionCode": "MS",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "billings",
+    "city": "Billings",
+    "regionCode": "MT",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "missoula",
+    "city": "Missoula",
+    "regionCode": "MT",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "asheville",
+    "city": "Asheville",
+    "regionCode": "NC",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "charlotte",
+    "city": "Charlotte",
+    "regionCode": "NC",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "greensboro",
+    "city": "Greensboro",
+    "regionCode": "NC",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "raleigh-durham",
+    "city": "Raleigh",
+    "regionCode": "NC",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "wilmington-nc",
+    "city": "Wilmington",
+    "regionCode": "NC",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "bismarck",
+    "city": "Bismarck",
+    "regionCode": "ND",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "fargo",
+    "city": "Fargo",
+    "regionCode": "ND",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "lincoln",
+    "city": "Lincoln",
+    "regionCode": "NE",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "omaha",
+    "city": "Omaha",
+    "regionCode": "NE",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "albuquerque",
+    "city": "Albuquerque",
+    "regionCode": "NM",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "las-cruces",
+    "city": "Las Cruces",
+    "regionCode": "NM",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "santa-fe",
+    "city": "Santa Fe",
+    "regionCode": "NM",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "las-vegas",
+    "city": "Las Vegas",
+    "regionCode": "NV",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "reno",
+    "city": "Reno",
+    "regionCode": "NV",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "albany",
+    "city": "Albany",
+    "regionCode": "NY",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "buffalo",
+    "city": "Buffalo",
+    "regionCode": "NY",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "new-york",
+    "city": "New York",
+    "regionCode": "NY",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "rochester",
+    "city": "Rochester",
+    "regionCode": "NY",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "syracuse",
+    "city": "Syracuse",
+    "regionCode": "NY",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "akron",
+    "city": "Akron",
+    "regionCode": "OH",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "cincinnati",
+    "city": "Cincinnati",
+    "regionCode": "OH",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "cleveland",
+    "city": "Cleveland",
+    "regionCode": "OH",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "columbus",
+    "city": "Columbus",
+    "regionCode": "OH",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "dayton",
+    "city": "Dayton",
+    "regionCode": "OH",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "toledo",
+    "city": "Toledo",
+    "regionCode": "OH",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "oklahoma-city",
+    "city": "Oklahoma City",
+    "regionCode": "OK",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "tulsa",
+    "city": "Tulsa",
+    "regionCode": "OK",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "bend",
+    "city": "Bend",
+    "regionCode": "OR",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "eugene",
+    "city": "Eugene",
+    "regionCode": "OR",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "medford",
+    "city": "Medford",
+    "regionCode": "OR",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "portland",
+    "city": "Portland",
+    "regionCode": "OR",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "salem-or",
+    "city": "Salem",
+    "regionCode": "OR",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "allentown",
+    "city": "Allentown",
+    "regionCode": "PA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "erie",
+    "city": "Erie",
+    "regionCode": "PA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "harrisburg",
+    "city": "Harrisburg",
+    "regionCode": "PA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "lancaster-pa",
+    "city": "Lancaster",
+    "regionCode": "PA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "philadelphia",
+    "city": "Philadelphia",
+    "regionCode": "PA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "pittsburgh",
+    "city": "Pittsburgh",
+    "regionCode": "PA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "scranton-wilkes-barre",
+    "city": "Scranton",
+    "regionCode": "PA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "greenville-sc",
+    "city": "Greenville",
+    "regionCode": "SC",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "rapid-city",
+    "city": "Rapid City",
+    "regionCode": "SD",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "sioux-falls",
+    "city": "Sioux Falls",
+    "regionCode": "SD",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "chattanooga",
+    "city": "Chattanooga",
+    "regionCode": "TN",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "knoxville",
+    "city": "Knoxville",
+    "regionCode": "TN",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "memphis",
+    "city": "Memphis",
+    "regionCode": "TN",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "nashville",
+    "city": "Nashville",
+    "regionCode": "TN",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "abilene",
+    "city": "Abilene",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "amarillo",
+    "city": "Amarillo",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "austin",
+    "city": "Austin",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "college-station",
+    "city": "College Station",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "corpus-christi",
+    "city": "Corpus Christi",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "dallas-fort-worth",
+    "city": "Dallas",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "el-paso",
+    "city": "El Paso",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "houston",
+    "city": "Houston",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "lubbock",
+    "city": "Lubbock",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "mcallen",
+    "city": "McAllen",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "midland-odessa",
+    "city": "Midland",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "san-antonio",
+    "city": "San Antonio",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "tyler",
+    "city": "Tyler",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "waco",
+    "city": "Waco",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "ogden",
+    "city": "Ogden",
+    "regionCode": "UT",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "salt-lake-city",
+    "city": "Salt Lake City",
+    "regionCode": "UT",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "norfolk-virginia-beach",
+    "city": "Norfolk",
+    "regionCode": "VA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "richmond",
+    "city": "Richmond",
+    "regionCode": "VA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "burlington-vt",
+    "city": "Burlington",
+    "regionCode": "VT",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "bellingham",
+    "city": "Bellingham",
+    "regionCode": "WA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "tri-cities-wa",
+    "city": "Kennewick",
+    "regionCode": "WA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "olympia",
+    "city": "Olympia",
+    "regionCode": "WA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "seattle",
+    "city": "Seattle",
+    "regionCode": "WA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "spokane",
+    "city": "Spokane",
+    "regionCode": "WA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "tacoma",
+    "city": "Tacoma",
+    "regionCode": "WA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "yakima",
+    "city": "Yakima",
+    "regionCode": "WA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "green-bay",
+    "city": "Green Bay",
+    "regionCode": "WI",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "milwaukee",
+    "city": "Milwaukee",
+    "regionCode": "WI",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "casper",
+    "city": "Casper",
+    "regionCode": "WY",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "cheyenne",
+    "city": "Cheyenne",
+    "regionCode": "WY",
+    "countryCode": "US"
+  }
+]

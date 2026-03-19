@@ -23,6 +23,8 @@ data_events/**
 !data_events/
 !data_events/cities.events.us.json
 !data_events/cities.events.ca.json
+!data_events/dataRan/
+!data_events/dataRan/hubs.all.from_app.json
 
 # One-off local artifacts
 paws.html
