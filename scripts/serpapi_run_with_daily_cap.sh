@@ -15,6 +15,9 @@ fi
 # Defaults (override per run: DAILY_CAP=50 DRY_RUN=1 ...)
 DAILY_CAP="${DAILY_CAP:-200}"
 DRY_RUN="${DRY_RUN:-0}"
+# SerpAPI serves recently-cached responses for free. Take them by default
+# (set ALLOW_CACHE=0 to force fresh, credit-spending searches).
+ALLOW_CACHE="${ALLOW_CACHE:-1}"
 
 VENV_PY="$ROOT/.venv-events/bin/python"
 
@@ -94,6 +97,10 @@ print("wrote_manifest:", "${MANIFEST}")
 PY
 
 # Run the burn script (this is the only thing that spends credits)
+CACHE_FLAG=()
+if [[ "$ALLOW_CACHE" == "1" ]]; then
+  CACHE_FLAG=(--allow-cache)
+fi
 "$VENV_PY" scripts/serpapi_google_events_burn.py \
   --hubs "$HUBS_FILE" \
   --out "$OUT_FILE" \
@@ -103,7 +110,8 @@ PY
   --starts "$STARTS" \
   --concurrency "$CONCURRENCY" \
   --throttle "$THROTTLE" \
-  --resume
+  --resume \
+  ${CACHE_FLAG[@]+"${CACHE_FLAG[@]}"}
 
 R_AFTER="$(remain)"
 echo "remaining_after=$R_AFTER"
