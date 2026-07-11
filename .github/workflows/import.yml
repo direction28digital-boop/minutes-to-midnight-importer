@@ -81,6 +81,18 @@ jobs:
             --concurrency 4 \
             --progress-every 200
 
+      # Cap blob storage: delete images of dogs that left the feed >90 days
+      # ago. MUST run after the rehost step — rehost bumps last_seen_at for
+      # the whole current feed, which is what protects live dogs' images.
+      # Content-shared blobs (littermates etc.) are only deleted when no
+      # live row references them.
+      - name: Clean up stale blobs
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          python scripts/cleanup_stale_blobs.py --days 90
+
       - name: Alert on failure
         if: failure()
         uses: ./.github/actions/notify-failure
