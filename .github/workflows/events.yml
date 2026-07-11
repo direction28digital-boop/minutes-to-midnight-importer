@@ -2,11 +2,12 @@ name: M2M events imports
 
 on:
   schedule:
-    # 3x daily to burn through 1000 SerpAPI searches by 2026-03-26
+    # 1x daily. The old 3x/day cadence was a deliberate burn of a SerpAPI
+    # credit batch that expired 2026-03-26 — long done. One morning run
+    # (with --allow-cache for free server-side cached responses) keeps the
+    # events fresh at a third of the spend (2026-07 automations audit).
     # Phoenix = UTC-7 year-round
     - cron: "20 13 * * *"   # 06:20 Phoenix (morning)
-    - cron: "20 18 * * *"   # 11:20 Phoenix (midday)
-    - cron: "20 23 * * *"   # 16:20 Phoenix (afternoon)
   workflow_dispatch:
     inputs:
       daily_cap:
@@ -106,3 +107,9 @@ jobs:
             data_events/events.normalized.jsonl
             data_events/dataRan/serpapi_runs/*.json
           if-no-files-found: ignore
+
+      - name: Alert on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}

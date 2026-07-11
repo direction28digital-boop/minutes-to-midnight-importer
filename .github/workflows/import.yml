@@ -2,7 +2,12 @@ name: M2M nightly imports
 
 on:
   schedule:
-    - cron: '0 9 * * *'
+    # Each run also drafts published animals missing from the current RG
+    # snapshot (draft_missing_published_animals), i.e. adopted dogs come
+    # off the site on every import. Two runs/day halve the worst-case
+    # window a "meet me" dog stays visible after adoption (~24h → ~12h).
+    - cron: '0 9 * * *'    # 02:00 Phoenix
+    - cron: '0 21 * * *'   # 14:00 Phoenix
   workflow_dispatch: {}
 
 permissions:
@@ -58,3 +63,9 @@ jobs:
           WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
         run: |
           python rg_fetch_and_normalize_http.py
+
+      - name: Alert on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}

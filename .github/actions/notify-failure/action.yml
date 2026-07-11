@@ -1,0 +1,39 @@
+# Posts a failure alert to a Discord webhook so broken automations are never
+# silent (2026-07 automations audit, item 3). Add as the LAST step of every
+# scheduled workflow:
+#
+#   - name: Alert on failure
+#     if: failure()
+#     uses: ./.github/actions/notify-failure
+#     with:
+#       webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+#
+# Setup (one-time): Discord server → channel → Integrations → Webhooks →
+# New Webhook → copy URL → add as the DISCORD_WEBHOOK_URL repo secret.
+# Until the secret exists this step logs a notice and succeeds, so adding
+# it is safe before the webhook is configured.
+name: Notify failure
+description: Post a workflow-failure alert to a Discord webhook (no-op when unset)
+
+inputs:
+  webhook-url:
+    description: Discord webhook URL (pass secrets.DISCORD_WEBHOOK_URL)
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Post Discord alert
+      shell: bash
+      env:
+        WEBHOOK_URL: ${{ inputs.webhook-url }}
+      run: |
+        if [ -z "$WEBHOOK_URL" ]; then
+          echo "::notice::DISCORD_WEBHOOK_URL secret not configured — skipping failure alert."
+          exit 0
+        fi
+        RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+        PAYLOAD=$(printf '{"content":"🚨 **%s** failed in `%s` — <%s>"}' \
+          "$GITHUB_WORKFLOW" "$GITHUB_REPOSITORY" "$RUN_URL")
+        curl -sS -X POST -H 'Content-Type: application/json' -d "$PAYLOAD" "$WEBHOOK_URL" \
+          || echo "::warning::Failed to post Discord alert"
