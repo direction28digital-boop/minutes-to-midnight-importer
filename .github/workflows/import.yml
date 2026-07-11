@@ -45,9 +45,11 @@ jobs:
           WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
           WP_USER: ${{ secrets.WP_USER }}
           WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
         run: |
           set -euo pipefail
-          for v in RG_API_KEY WP_BASE_URL WP_USER WP_PASSWORD; do
+          for v in RG_API_KEY WP_BASE_URL WP_USER WP_PASSWORD NEON_DATABASE_URL BLOB_READ_WRITE_TOKEN; do
             if [ -z "${!v:-}" ]; then
               echo "Missing required secret: $v"
               exit 1
@@ -63,6 +65,21 @@ jobs:
           WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
         run: |
           python rg_fetch_and_normalize_http.py
+
+      # Rehost any new RescueGroups photo URLs into Vercel Blob +
+      # m2mr.media_assets. Idempotent: already-mapped (and tombstoned-dead)
+      # URLs are skipped, so this only uploads what this import introduced —
+      # it keeps blob coverage at ~100% so the site never has to fall back
+      # to RG's CDN. Reads the snapshot the importer just wrote.
+      - name: Rehost new photos to Vercel Blob
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          python scripts/rehost_media_assets.py \
+            --in data/animals.normalized.jsonl \
+            --concurrency 4 \
+            --progress-every 200
 
       - name: Alert on failure
         if: failure()
