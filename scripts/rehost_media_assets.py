@@ -100,6 +100,24 @@ def fetch_existing_urls(dsn: str) -> set[str]:
         return {row[0] for row in cur.fetchall()}
 
 
+def bump_last_seen(dsn: str, urls: list[str], chunk: int = 5000) -> int:
+    """Mark every URL present in the current feed as seen-now. The stale-blob
+    cleanup (scripts/cleanup_stale_blobs.py) deletes rows/blobs whose
+    last_seen_at is older than its cutoff — this bump is what protects
+    still-listed dogs, so it MUST run against the full current feed."""
+    bumped = 0
+    with psycopg.connect(dsn) as conn, conn.cursor() as cur:
+        for i in range(0, len(urls), chunk):
+            cur.execute(
+                "update m2mr.media_assets set last_seen_at = now() "
+                "where source='RG' and original_url = any(%s)",
+                (urls[i : i + chunk],),
+            )
+            bumped += cur.rowcount
+        conn.commit()
+    return bumped
+
+
 def record_dead_url(dsn: str, original_url: str, rg_animal_id: str) -> None:
     """Tombstone a hard-404 URL so it's never retried. public_url='' reads as
     "no photo" on the site (falls through to the breed placeholder)."""
@@ -148,6 +166,11 @@ async def main() -> None:
 
     wanted = collect_from_animals(animals)
     existing = fetch_existing_urls(dsn)
+
+    # Every URL in the current feed counts as "seen" whether or not it needs
+    # uploading — keeps the stale-blob cleanup from touching live dogs.
+    seen_bumped = bump_last_seen(dsn, list(wanted.keys()))
+    print(f"last_seen_at bumped for {seen_bumped} existing mappings")
     todo = [(u, aid) for u, aid in wanted.items() if u not in existing]
     skipped = len(wanted) - len(todo)
     if args.limit:
