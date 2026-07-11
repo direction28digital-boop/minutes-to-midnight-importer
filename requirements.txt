@@ -1,1 +1,4 @@
 requests==2.32.3
+psycopg[binary]==3.3.4
+pillow==12.3.0
+vercel==0.6.0
