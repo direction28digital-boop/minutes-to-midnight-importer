@@ -1,0 +1,220 @@
+[
+  {
+    "hubId": "vancouver-bc",
+    "city": "Vancouver",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "toronto-on",
+    "city": "Toronto",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "montreal-qc",
+    "city": "Montreal",
+    "regionCode": "QC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "calgary-ab",
+    "city": "Calgary",
+    "regionCode": "AB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "edmonton-ab",
+    "city": "Edmonton",
+    "regionCode": "AB",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "ottawa-on",
+    "city": "Ottawa",
+    "regionCode": "ON",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "victoria-bc",
+    "city": "Victoria",
+    "regionCode": "BC",
+    "countryCode": "CA"
+  },
+  {
+    "hubId": "halifax-ns",
+    "city": "Halifax",
+    "regionCode": "NS",
+    "countryCode": "CA"
+  },
+
+  {
+    "hubId": "new-york-ny",
+    "city": "New York",
+    "regionCode": "NY",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "los-angeles-ca",
+    "city": "Los Angeles",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "chicago-il",
+    "city": "Chicago",
+    "regionCode": "IL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "san-francisco-ca",
+    "city": "San Francisco",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "san-diego-ca",
+    "city": "San Diego",
+    "regionCode": "CA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "seattle-wa",
+    "city": "Seattle",
+    "regionCode": "WA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "portland-or",
+    "city": "Portland",
+    "regionCode": "OR",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "austin-tx",
+    "city": "Austin",
+    "regionCode": "TX",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "denver-co",
+    "city": "Denver",
+    "regionCode": "CO",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "boston-ma",
+    "city": "Boston",
+    "regionCode": "MA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "washington-dc",
+    "city": "Washington",
+    "regionCode": "DC",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "philadelphia-pa",
+    "city": "Philadelphia",
+    "regionCode": "PA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "atlanta-ga",
+    "city": "Atlanta",
+    "regionCode": "GA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "miami-fl",
+    "city": "Miami",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "phoenix-az",
+    "city": "Phoenix",
+    "regionCode": "AZ",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "las-vegas-nv",
+    "city": "Las Vegas",
+    "regionCode": "NV",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "nashville-tn",
+    "city": "Nashville",
+    "regionCode": "TN",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "new-orleans-la",
+    "city": "New Orleans",
+    "regionCode": "LA",
+    "countryCode": "US"
+  },
+
+  {
+    "hubId": "tampa-fl",
+    "city": "Tampa",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "orlando-fl",
+    "city": "Orlando",
+    "regionCode": "FL",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "raleigh-nc",
+    "city": "Raleigh",
+    "regionCode": "NC",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "charlotte-nc",
+    "city": "Charlotte",
+    "regionCode": "NC",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "minneapolis-mn",
+    "city": "Minneapolis",
+    "regionCode": "MN",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "pittsburgh-pa",
+    "city": "Pittsburgh",
+    "regionCode": "PA",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "columbus-oh",
+    "city": "Columbus",
+    "regionCode": "OH",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "kansas-city-mo",
+    "city": "Kansas City",
+    "regionCode": "MO",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "salt-lake-city-ut",
+    "city": "Salt Lake City",
+    "regionCode": "UT",
+    "countryCode": "US"
+  },
+  {
+    "hubId": "honolulu-hi",
+    "city": "Honolulu",
+    "regionCode": "HI",
+    "countryCode": "US"
+  }
+]
