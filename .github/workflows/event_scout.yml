@@ -1,0 +1,77 @@
+name: SnoutHub event scout
+
+# Weekly hunt for dog-friendly events across the 36 priority hubs.
+# Claude (with web search) finds events like a human editor and files them
+# as PENDING rows in event_submissions; Dee approves in /admin/events.
+# Writes only to Anthropic API + Neon: immune to the Hostinger/GitHub-runner
+# flakiness that plagues the WP-touching workflows.
+#
+# Budget guardrails (Dee's cap: $50/mo total events spend):
+#   - MAX_HUBS caps each run (36 hubs ~= $4-5/run, ~$20/mo weekly)
+#   - Anthropic credits are prepaid with auto-reload off = hard wall
+
+on:
+  schedule:
+    - cron: "0 15 * * 1"   # Mondays 10:00 CT / 8:00 Phoenix
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Only scout the first N hubs (0 = all 36)"
+        required: false
+        default: "0"
+      hub:
+        description: "Scout a single hubId (e.g. phoenix-az)"
+        required: false
+        default: ""
+
+concurrency:
+  group: event-scout-weekly
+  cancel-in-progress: false
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests "psycopg[binary]"
+
+      - name: Run the scout
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limit || '0' }}
+          HUB: ${{ github.event_name == 'workflow_dispatch' && inputs.hub || '' }}
+          MAX_HUBS: "40"
+        run: |
+          set -euo pipefail
+          if [[ -z "${ANTHROPIC_API_KEY:-}" || -z "${DATABASE_URL:-}" ]]; then
+            echo "Missing ANTHROPIC_API_KEY or DATABASE_URL repo secret."
+            exit 2
+          fi
+          ARGS=""
+          if [[ -n "$HUB" ]]; then
+            ARGS="--hub $HUB"
+          elif [[ "$LIMIT" != "0" ]]; then
+            ARGS="--limit $LIMIT"
+          else
+            ARGS="--limit $MAX_HUBS"
+          fi
+          python scripts/event_scout.py $ARGS
+
+      - name: Alert on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
