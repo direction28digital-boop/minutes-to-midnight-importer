@@ -1,13 +1,13 @@
 name: SnoutHub event scout
 
-# Weekly hunt for dog-friendly events across the 36 priority hubs.
+# Weekly hunt for dog-friendly events across ALL SnoutHub cities (98).
 # Claude (with web search) finds events like a human editor and files them
 # as PENDING rows in event_submissions; Dee approves in /admin/events.
 # Writes only to Anthropic API + Neon: immune to the Hostinger/GitHub-runner
 # flakiness that plagues the WP-touching workflows.
 #
 # Budget guardrails (Dee's cap: $50/mo total events spend):
-#   - MAX_HUBS caps each run (36 hubs ~= $4-5/run, ~$20/mo weekly)
+#   - MAX_HUBS caps each run (98 cities ~= $12-13/run, ~$55/mo weekly)
 #   - Anthropic credits are prepaid with auto-reload off = hard wall
 
 on:
@@ -23,6 +23,10 @@ on:
         description: "Scout a single hubId (e.g. phoenix-az)"
         required: false
         default: ""
+      offset:
+        description: "Skip the first N hubs (36 = only the non-priority cities)"
+        required: false
+        default: "0"
 
 concurrency:
   group: event-scout-weekly
@@ -31,7 +35,7 @@ concurrency:
 jobs:
   scout:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 180
 
     steps:
       - name: Checkout
@@ -53,20 +57,26 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limit || '0' }}
           HUB: ${{ github.event_name == 'workflow_dispatch' && inputs.hub || '' }}
-          MAX_HUBS: "40"
+          OFFSET: ${{ github.event_name == 'workflow_dispatch' && inputs.offset || '0' }}
+          MAX_HUBS: "100"
         run: |
           set -euo pipefail
           if [[ -z "${ANTHROPIC_API_KEY:-}" || -z "${DATABASE_URL:-}" ]]; then
             echo "Missing ANTHROPIC_API_KEY or DATABASE_URL repo secret."
             exit 2
           fi
-          ARGS=""
+          ARGS="--hubs-file data_events/hubs.events_all.json"
           if [[ -n "$HUB" ]]; then
-            ARGS="--hub $HUB"
-          elif [[ "$LIMIT" != "0" ]]; then
-            ARGS="--limit $LIMIT"
+            ARGS="$ARGS --hub $HUB"
           else
-            ARGS="--limit $MAX_HUBS"
+            if [[ -n "$OFFSET" && "$OFFSET" != "0" ]]; then
+              ARGS="$ARGS --offset $OFFSET"
+            fi
+            if [[ "$LIMIT" != "0" ]]; then
+              ARGS="$ARGS --limit $LIMIT"
+            else
+              ARGS="$ARGS --limit $MAX_HUBS"
+            fi
           fi
           python scripts/event_scout.py $ARGS
 

@@ -26,6 +26,7 @@ data_events/**
 !data_events/dataRan/
 !data_events/dataRan/hubs.all.from_app.json
 !data_events/hubs.events_priority.top36.json
+!data_events/hubs.events_all.json
 
 # One-off local artifacts
 paws.html

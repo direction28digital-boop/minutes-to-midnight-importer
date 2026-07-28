@@ -1,13 +1,15 @@
 name: M2M events imports
 
 on:
-  schedule:
+  # RETIRED 2026-07-28: SerpApi cancelled; the Claude event scout replaces this
+  # supply line. Manual dispatch still works if ever needed.
+  # schedule:
     # 1x daily. The old 3x/day cadence was a deliberate burn of a SerpAPI
     # credit batch that expired 2026-03-26 — long done. One morning run
     # (with --allow-cache for free server-side cached responses) keeps the
     # events fresh at a third of the spend (2026-07 automations audit).
     # Phoenix = UTC-7 year-round
-    - cron: "20 13 * * *"   # 06:20 Phoenix (morning)
+  #   - cron: "20 13 * * *"   # 06:20 Phoenix (morning)
   workflow_dispatch:
     inputs:
       daily_cap:

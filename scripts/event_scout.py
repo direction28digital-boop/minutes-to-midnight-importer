@@ -130,6 +130,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--hubs-file", default=str(HUBS_FILE))
     ap.add_argument("--limit", type=int, default=0, help="only the first N hubs")
+    ap.add_argument("--offset", type=int, default=0, help="skip the first N hubs (e.g. 36 = only the non-priority cities)")
     ap.add_argument("--hub", default="", help="single hubId, e.g. phoenix-az")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
@@ -143,6 +144,8 @@ def main() -> int:
     hubs = json.load(open(args.hubs_file))
     if args.hub:
         hubs = [h for h in hubs if h["hubId"] == args.hub]
+    if args.offset:
+        hubs = hubs[args.offset :]
     if args.limit:
         hubs = hubs[: args.limit]
     if not hubs:
