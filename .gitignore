@@ -42,3 +42,5 @@ places_prefill.py
 
 # SerpAPI run logs / manifests
 data_events/dataRan/serpapi_runs/
+
+.backfill_artifacts/
