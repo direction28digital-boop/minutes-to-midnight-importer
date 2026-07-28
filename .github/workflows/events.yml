@@ -99,6 +99,40 @@ jobs:
             echo "No raw event files found at data_events/raw/**/*.jsonl. Skipping normalize."
           fi
 
+      - name: Upsert events to WordPress
+        shell: bash
+        env:
+          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
+          WP_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || '0' }}
+        run: |
+          set -euo pipefail
+          if [[ ! -f data_events/events.normalized.jsonl ]]; then
+            echo "No normalized events file. Skipping WP upsert."
+            exit 0
+          fi
+          ./.venv-events/bin/python scripts/upsert_events_to_wp.py
+
+      # Pull the fresh WP events straight into the site's Neon DB so new
+      # events show up the same morning instead of waiting for the site's
+      # own 9:00 UTC cron (which runs BEFORE this fetch). Requires the
+      # CRON_SECRET repo secret (same value as the Vercel env var);
+      # skips quietly if unset.
+      - name: Trigger site import (WP -> Neon)
+        shell: bash
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${CRON_SECRET:-}" ]]; then
+            echo "CRON_SECRET not set. Site picks up events at its next 9:00 UTC cron."
+            exit 0
+          fi
+          curl -fsS -m 290 -H "Authorization: Bearer $CRON_SECRET" \
+            "https://snouthub.com/api/cron/import-events" || \
+            echo "::warning::Site import trigger failed; the 9:00 UTC cron will catch up."
+
       - name: Upload normalized + run manifests (artifacts)
         uses: actions/upload-artifact@v4
         with:
