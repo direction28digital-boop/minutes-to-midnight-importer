@@ -62,14 +62,15 @@ jobs:
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
           DAILY_CAP: ${{ github.event_name == 'workflow_dispatch' && inputs.daily_cap || '50' }}
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || '0' }}
-          # Expanded terms & filters to create enough unique task IDs for 3 runs/day
-          TERMS: >-
-            dog friendly events,dog adoption event,pet adoption event,
-            dog rescue fundraiser,pet friendly festival,dog meetup
-          DATE_FILTERS: >-
-            date:today,date:tomorrow,date:week,date:next_week,date:month,date:next_month
-          # Two pagination offsets doubles unique tasks per hub
-          STARTS: "0,10"
+          # 2026-07-28 rework: Google Events stopped answering the old niche
+          # dog phrasings entirely, and any htichips date filter zeroes out
+          # niche queries. "pet events in <city>" is the phrasing that still
+          # returns real results (verified live: Pup Festival, Cause for
+          # Paws). One term x no filter x 22 hubs = ~22 searches/day, well
+          # inside the 1,000/mo plan. Expired events are dropped site-side.
+          TERMS: "pet events"
+          DATE_FILTERS: "none"
+          STARTS: "0"
           # Faster throttle to finish each run quickly
           THROTTLE: "2.0"
         run: |

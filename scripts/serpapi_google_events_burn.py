@@ -181,9 +181,14 @@ def fetch_one(
         "hl": hl,
         "gl": gl,
         "start": task.start,
-        "htichips": task.htichips,
         "api_key": api_key,
     }
+    # "none" (or empty) means: send NO date-filter chip. Verified 2026-07-28:
+    # Google Events stopped returning results for niche queries (e.g.
+    # "pet events in Phoenix, AZ") whenever any htichips date filter is
+    # attached; the same query WITHOUT a chip returns real events.
+    if task.htichips and task.htichips.strip().lower() != "none":
+        params["htichips"] = task.htichips
     if no_cache:
         params["no_cache"] = "true"
 
