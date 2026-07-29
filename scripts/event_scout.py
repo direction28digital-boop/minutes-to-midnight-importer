@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import date as _date, timedelta as _td
 import os
 import re
 import sys
@@ -122,6 +123,14 @@ def scout_hub(hub: dict, api_key: str, model: str) -> list[dict]:
         start = str(ev.get("startDateTime") or "").strip()
         if len(title) < 3 or not url.startswith("http") or not start:
             continue
+        # Date sanity: the model occasionally returns past events (last year's
+        # Halloween contest etc.). Drop anything that started before yesterday;
+        # unparseable dates pass through for the human moderator to judge.
+        try:
+            if _date.fromisoformat(start[:10]) < _date.today() - _td(days=1):
+                continue
+        except ValueError:
+            pass
         out.append(ev)
     return out
 
