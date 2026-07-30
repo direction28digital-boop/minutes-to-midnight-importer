@@ -1,5 +1,11 @@
 [
   {
+    "hubId": "arlington-va",
+    "city": "Arlington",
+    "regionCode": "VA",
+    "countryCode": "US"
+  },
+  {
     "hubId": "vancouver-bc",
     "city": "Vancouver",
     "regionCode": "BC",
