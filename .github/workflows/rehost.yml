@@ -1,0 +1,82 @@
+name: Rehost photos to Blob
+
+# Photo mirroring, decoupled from the nightly importer.
+#
+# The site is blob-or-nothing: /api/dogs drops any RescueGroups URL that has
+# no row in m2mr.media_assets and renders a breed placeholder instead. That
+# means photo coverage is only as good as the last time the rehost script
+# ran — and when it lived only as the step after the importer, a single
+# importer crash or timeout silently froze coverage, so every newly listed
+# dog showed a silhouette.
+#
+# This runs the same idempotent script on its own schedule against the live
+# M2M feed, so coverage self-heals within hours no matter what the importer
+# is doing. Already-mapped and tombstoned URLs are skipped, so a run with
+# nothing new to do costs a few seconds.
+
+on:
+  schedule:
+    - cron: '30 */6 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m2m-rehost
+  cancel-in-progress: false
+
+jobs:
+  rehost:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      PYTHONUNBUFFERED: '1'
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Sanity-check required secrets
+        env:
+          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          set -euo pipefail
+          for v in WP_BASE_URL NEON_DATABASE_URL BLOB_READ_WRITE_TOKEN; do
+            if [ -z "${!v:-}" ]; then
+              echo "Missing required secret: $v"
+              exit 1
+            fi
+          done
+          echo "Secrets look present."
+
+      - name: Rehost missing photos to Vercel Blob
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          M2M_API_BASE: ${{ secrets.WP_BASE_URL }}
+        run: |
+          python scripts/rehost_media_assets.py \
+            --from-api \
+            --concurrency 4 \
+            --progress-every 200
+
+      - name: Alert on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}

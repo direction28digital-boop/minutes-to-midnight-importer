@@ -24,6 +24,15 @@ def slugify(value: str) -> str:
     return value.strip("-") or "item"
 
 
+# RescueGroups drops connections mid-run often enough that a single
+# unlucky page used to kill the whole nightly import (and with it the
+# photo-rehost step that runs after it, which is why the site fell back to
+# breed placeholders for every dog added since the last clean run).
+# Transient network faults get retried with exponential backoff instead.
+RG_MAX_ATTEMPTS = 5
+RG_BACKOFF_SECONDS = 5
+
+
 def fetch_page(page: int, limit: int = 250) -> dict:
     # RG docs: Content-Type is required header
     headers = {
@@ -38,7 +47,44 @@ def fetch_page(page: int, limit: int = 250) -> dict:
         "include": "orgs",
     }
 
-    response = requests.get(BASE_URL, headers=headers, params=params, timeout=60)
+    response = None
+    for attempt in range(1, RG_MAX_ATTEMPTS + 1):
+        try:
+            response = requests.get(
+                BASE_URL, headers=headers, params=params, timeout=60
+            )
+        except (RequestsConnectionError, RequestsReadTimeout) as e:
+            if attempt == RG_MAX_ATTEMPTS:
+                print(
+                    f"RG connection failed on page {page} after "
+                    f"{RG_MAX_ATTEMPTS} attempts: {e}"
+                )
+                raise
+            wait = RG_BACKOFF_SECONDS * (2 ** (attempt - 1))
+            print(
+                f"RG connection error on page {page} "
+                f"(attempt {attempt}/{RG_MAX_ATTEMPTS}): {e}. "
+                f"Retrying in {wait}s."
+            )
+            time.sleep(wait)
+            continue
+
+        # 429 / 5xx are upstream hiccups, not our bug. Same treatment.
+        if response.status_code == 429 or response.status_code >= 500:
+            if attempt == RG_MAX_ATTEMPTS:
+                break
+            wait = RG_BACKOFF_SECONDS * (2 ** (attempt - 1))
+            print(
+                f"RG returned HTTP {response.status_code} on page {page} "
+                f"(attempt {attempt}/{RG_MAX_ATTEMPTS}). Retrying in {wait}s."
+            )
+            time.sleep(wait)
+            continue
+
+        break
+
+    if response is None:
+        raise RuntimeError(f"RG request for page {page} never produced a response")
 
     try:
         response.raise_for_status()

@@ -57,7 +57,15 @@ jobs:
           done
           echo "Secrets look present."
 
+      # The WP upsert loop can run for hours. Bound it so a slow run fails
+      # here instead of burning the runner's 6h job limit, and let the job
+      # keep going either way — the photo rehost below must not be held
+      # hostage by the importer (that coupling is what left every recently
+      # listed dog rendering a breed placeholder on the site).
       - name: Run RescueGroups importer
+        id: importer
+        continue-on-error: true
+        timeout-minutes: 240
         env:
           RG_API_KEY: ${{ secrets.RG_API_KEY }}
           WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
@@ -68,30 +76,46 @@ jobs:
 
       # Rehost any new RescueGroups photo URLs into Vercel Blob +
       # m2mr.media_assets. Idempotent: already-mapped (and tombstoned-dead)
-      # URLs are skipped, so this only uploads what this import introduced —
+      # URLs are skipped, so this only uploads what's still missing —
       # it keeps blob coverage at ~100% so the site never has to fall back
-      # to RG's CDN. Reads the snapshot the importer just wrote.
+      # to RG's CDN.
+      #
+      # Reads the live M2M feed (--from-api) rather than the importer's
+      # snapshot: it's the same set the site queries, and it stays complete
+      # even when the importer above died or timed out partway. A complete
+      # feed also matters for the last_seen_at bump the cleanup step relies on.
       - name: Rehost new photos to Vercel Blob
+        id: rehost
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          M2M_API_BASE: ${{ secrets.WP_BASE_URL }}
         run: |
           python scripts/rehost_media_assets.py \
-            --in data/animals.normalized.jsonl \
+            --from-api \
             --concurrency 4 \
             --progress-every 200
 
       # Cap blob storage: delete images of dogs that left the feed >90 days
-      # ago. MUST run after the rehost step — rehost bumps last_seen_at for
-      # the whole current feed, which is what protects live dogs' images.
+      # ago. MUST run after a SUCCESSFUL rehost — rehost bumps last_seen_at
+      # for the whole current feed, which is what protects live dogs' images.
       # Content-shared blobs (littermates etc.) are only deleted when no
       # live row references them.
       - name: Clean up stale blobs
+        if: steps.rehost.outcome == 'success'
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
         run: |
           python scripts/cleanup_stale_blobs.py --days 90
+
+      # The importer ran with continue-on-error so the rehost could proceed.
+      # Surface its failure now, after the photo work is safely done.
+      - name: Fail the run if the importer failed
+        if: steps.importer.outcome != 'success'
+        run: |
+          echo "RescueGroups importer step reported: ${{ steps.importer.outcome }}"
+          exit 1
 
       - name: Alert on failure
         if: failure()
