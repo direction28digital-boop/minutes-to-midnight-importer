@@ -13,6 +13,12 @@ name: Rehost photos to Blob
 # M2M feed, so coverage self-heals within hours no matter what the importer
 # is doing. Already-mapped and tombstoned URLs are skipped, so a run with
 # nothing new to do costs a few seconds.
+#
+# The FIRST run is a big one: coverage across sampled hub cities was ~57%,
+# so there are thousands of photos to upload before it settles into
+# top-up mode. It is resumable — already-mapped URLs are skipped — so if a
+# run hits the timeout, just dispatch it again and it picks up where it
+# stopped.
 
 on:
   schedule:
@@ -29,7 +35,7 @@ concurrency:
 jobs:
   rehost:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 330
     env:
       PYTHONUNBUFFERED: '1'
 
@@ -72,7 +78,7 @@ jobs:
         run: |
           python scripts/rehost_media_assets.py \
             --from-api \
-            --concurrency 4 \
+            --concurrency 8 \
             --progress-every 200
 
       - name: Alert on failure
