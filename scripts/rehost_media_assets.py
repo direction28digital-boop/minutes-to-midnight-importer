@@ -40,7 +40,11 @@ from urllib.parse import urlparse, urlunparse
 import psycopg
 import requests
 
-from m2mr.media.cache_rg_image import cache_rg_image_to_blob
+from m2mr.media.cache_rg_image import (
+    BlobAuthError,
+    blob_preflight,
+    cache_rg_image_to_blob,
+)
 
 
 def canonicalize_url(url: str) -> str:
@@ -155,6 +159,15 @@ async def main() -> None:
     if not os.getenv("BLOB_READ_WRITE_TOKEN"):
         raise SystemExit("BLOB_READ_WRITE_TOKEN not set. Run: source .env.local")
 
+    # A present-but-invalid token used to cost ~3 hours per run: every URL
+    # downloaded fine, then failed its upload four times with backoff. Prove
+    # we can write to the store before doing any real work.
+    try:
+        await blob_preflight()
+    except BlobAuthError as e:
+        raise SystemExit(f"blob preflight failed: {e}")
+    print("blob preflight ok")
+
     if args.in_path:
         animals = load_animals_from_jsonl(args.in_path)
         print(f"loaded {len(animals)} animals from {args.in_path}")
@@ -187,9 +200,15 @@ async def main() -> None:
     done = 0
     started = time.time()
     dead_lock = asyncio.Lock()
+    # Set if Blob starts rejecting our token mid-run (e.g. rotated while the
+    # job was in flight). Everything still queued short-circuits instead of
+    # grinding through thousands of guaranteed failures.
+    abort_reason: list[str] = []
 
     async def handle(original_url: str, rg_animal_id: str) -> None:
         nonlocal uploaded, dead, failed, done
+        if abort_reason:
+            return
         try:
             async with sem:
                 await cache_rg_image_to_blob(
@@ -199,6 +218,11 @@ async def main() -> None:
                     rg_media_id=None,
                 )
             uploaded += 1
+        except BlobAuthError as e:
+            if not abort_reason:
+                abort_reason.append(str(e))
+                print(f"FATAL blob auth failure, aborting run: {str(e)[:200]}", file=sys.stderr)
+            failed += 1
         except Exception as e:
             msg = str(e)
             if msg.startswith("404_not_found:"):
@@ -233,6 +257,9 @@ async def main() -> None:
     print("uploaded:", uploaded)
     print("dead_404:", dead)
     print("failed_transient:", failed)
+
+    if abort_reason:
+        raise SystemExit(f"aborted - Vercel Blob rejected the token mid-run: {abort_reason[0][:200]}")
 
     # Fail the run (and trip CI alerting) only on systemic failure — a few
     # transient stragglers self-heal on the next run since they stay unmapped.

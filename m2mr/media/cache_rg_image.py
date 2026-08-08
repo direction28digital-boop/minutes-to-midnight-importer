@@ -21,6 +21,62 @@ EXT_BY_CONTENT_TYPE = {
 
 RETRYABLE_HTTP_STATUS = {429, 500, 502, 503, 504}
 
+# Substrings Vercel Blob uses when the token is missing, rotated, or points at
+# a store we can no longer write to. That condition is permanent for the whole
+# run, not per-URL, so retrying it just burns wall-clock (and CI minutes)
+# before failing anyway — see BlobAuthError below.
+BLOB_AUTH_MARKERS = (
+    "access denied",
+    "valid token",
+    "unauthorized",
+    "forbidden",
+    "invalid token",
+    "no token",
+)
+
+
+class BlobAuthError(RuntimeError):
+    """Vercel Blob rejected our credentials. Fatal for the whole run."""
+
+
+def _is_blob_auth_error(err: Exception) -> bool:
+    msg = str(err).lower()
+    return any(marker in msg for marker in BLOB_AUTH_MARKERS)
+
+
+async def blob_preflight() -> None:
+    """Write and delete a throwaway object so a bad BLOB_READ_WRITE_TOKEN
+    fails the job in seconds instead of after thousands of doomed uploads."""
+    client = AsyncBlobClient()
+    pathname = "_preflight/token-check.txt"
+    try:
+        await client.put(
+            pathname,
+            b"ok",
+            access="public",
+            content_type="text/plain",
+            overwrite=True,
+            add_random_suffix=False,
+        )
+    except Exception as e:
+        # Any failure to write 2 bytes means the run can't work, so treat the
+        # whole class as fatal rather than only the explicit auth wording -
+        # a malformed token comes back as a generic "Unknown error".
+        hint = (
+            "The token is missing, rotated, or points at a different store"
+            if _is_blob_auth_error(e)
+            else "Check BLOB_READ_WRITE_TOKEN and that the store still exists"
+        )
+        raise BlobAuthError(
+            f"Vercel Blob rejected a 2-byte probe write ({type(e).__name__}: "
+            f"{str(e)[:200]}). {hint} - refresh it and re-run."
+        ) from e
+    try:
+        await client.delete(pathname)
+    except Exception:
+        # Cleanup is best-effort; the probe object is 2 bytes.
+        pass
+
 
 def _canonicalize_url(url: str) -> str:
     p = urlparse(url)
@@ -191,6 +247,12 @@ async def _blob_put_with_retries(
             return uploaded.url
         except Exception as e:
             last = e
+
+            # Auth failures are permanent for the whole run. Surface them
+            # immediately so the caller can abort instead of retrying every
+            # remaining URL four times over.
+            if _is_blob_auth_error(e):
+                raise BlobAuthError(str(e)) from e
 
             # If the SDK/API still reports "already exists", fetch the existing URL via head()
             msg = str(e).lower()
