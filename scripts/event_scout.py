@@ -52,24 +52,55 @@ def load_env() -> dict:
     return env
 
 
-PROMPT = """Find dog-friendly public events happening in the next 60 days in and around {city}, {region} ({country}).
+PROMPT = """Find dog events happening in the next 60 days in and around {city}, {region} ({country}).
 
-Search the live web the way a local events editor would. Many dog events are only announced on Facebook, so also search for: "{city} dog events this weekend", local news and TV station weekend roundups, the city's tourism calendar (visit-{city} style sites), breweries and dog bars in {city} (their own sites list yappy hours), rescue organizations' adoption days and fundraisers, PetSmart/Petco adoption event pages, Eventbrite, and AllEvents-style listings. IMPORTANT: you are feeding a HUMAN MODERATION QUEUE, not publishing directly, so include every real event you find rather than holding back: a lead with partial detail is far more valuable than nothing. The bar is: a plausible real event with a title, a date (or recurring pattern) inside the window, and the URL where you saw it. Aggregator pages (allevents.in, bringfido, eventbrite lists, news roundups) are perfectly acceptable source URLs; so are public Facebook event announcements. Missing time, address, or organizer are fine: use null. Recurring events (a standing weekday or Saturday yappy hour) count: use the next occurrence date and mention the recurrence in the description. Only skip things that are clearly expired or clearly not real.
+Search the live web the way a local events editor would. Many dog events are only announced on Facebook, so also search for: "{city} dog events this weekend", local news and TV weekend roundups, the city tourism calendar (visit-{city} style sites), breweries and dog bars in {city} (their own sites list yappy hours), rescue organizations' adoption days and fundraisers, PetSmart/Petco adoption event pages, Eventbrite, and AllEvents-style listings.
+
+THE BAR CHANGED ON 2026-08-16. READ THIS PART CAREFULLY.
+
+You are NOT feeding a human moderation queue any more. Auto-triage publishes what you send, so anything you cannot substantiate becomes work for a person instead of a lead for one. An earlier version of this prompt told you that a lead with partial detail was more valuable than nothing. That is now false. A vague submission is worse than no submission, because a human has to read it and then throw it away.
+
+Send an event ONLY if you can satisfy ALL THREE of these:
+
+1. SOMEWHERE TO TURN UP. You have a venue name OR a street address. "Denver, CO" is a topic, not a place. If you cannot find either, drop the event.
+
+2. IT IS A REAL DOG EVENT. Same bar as before. Do NOT drop an event just because the page never spells out the dog situation. A "Tucson Dog Festival" with no sentence saying "dogs welcome" is still a real find and still belongs in the queue for a human.
+   What is new is that when the page DOES say it, you must quote it. Copy the exact sentence or phrase into `dogEvidence`, VERBATIM, no paraphrasing and no cleaning up, even if the grammar is bad. It is never shown to visitors, it is machine-checked, and it is what lets the event publish without a human reading it.
+
+3. IT IS A SPECIFIC OCCURRENCE. A real event on a real date, not an awareness day, not a "check local businesses for activities" roundup, and never a reference page (Wikipedia, Britannica, National Day Calendar). A recurring event is fine: give the next occurrence and describe the recurrence.
+
+Set `dogPolicy` to exactly one of:
+  "dogs-welcome"  the page says a visitor may bring their own dog. Quote that sentence
+                  in dogEvidence.
+  "find-a-dog"    an adoption, rescue or shelter event. The dogs there belong to the
+                  organization and are looking for people. Quote the sentence that
+                  shows this. Do NOT mark it dogs-welcome unless the page separately
+                  says visitors may bring their own dog too.
+  "unclear"       a real dog event, but the page does not actually say either way.
+                  Set dogEvidence to null. STILL SEND IT. A human will decide.
+
+NEVER GUESS BETWEEN THE FIRST TWO. "unclear" is the honest answer and it costs nothing, because it just means a person looks. Guessing wrong is what sends someone to an adoption day with their own dog, or tells them to leave their dog home when it was welcome. If you are unsure, "unclear" is correct.
+
+Quality over volume on requirements 1 and 3: do not pad with vague listings. But do not withhold a real event just because you could not quote it.
 
 Respond with ONLY a JSON array (no prose before or after). Each element:
 {{
   "title": "...",
   "startDateTime": "YYYY-MM-DDTHH:MM" (best known; date-only OK as YYYY-MM-DD),
   "endDateTime": "..." or null,
-  "venueName": "..." or null,
-  "addressLine1": "street address" or null,
+  "venueName": "..." (required unless addressLine1 is present),
+  "addressLine1": "street address" (required unless venueName is present),
   "url": "the event page URL",
   "description": "1-2 original sentences, warm dog-lover tone, no copied text",
+  "dogPolicy": "dogs-welcome" | "find-a-dog" | "unclear",
+  "dogEvidence": "the VERBATIM sentence from the page about dogs" (null if unclear),
   "organizerName": "..." or null,
   "organizerEmail": "only if publicly listed on the event/organizer page, else null"
 }}
 
-Return [] if you find nothing verifiable. Maximum 12 events."""
+Note `description` and `dogEvidence` are different on purpose. `description` is your own warm original prose and is shown to visitors. `dogEvidence` is a raw copied quote, is never displayed, and exists only so a machine can verify your claim. Never put your own words in `dogEvidence`.
+
+Return [] if you find nothing that clears requirements 1 and 3. Maximum 12 events."""
 
 
 def scout_hub(hub: dict, api_key: str, model: str) -> list[dict]:
@@ -123,6 +154,34 @@ def scout_hub(hub: dict, api_key: str, model: str) -> list[dict]:
         start = str(ev.get("startDateTime") or "").strip()
         if len(title) < 3 or not url.startswith("http") or not start:
             continue
+        # Enforce the three requirements in code, not just in the prompt. A
+        # prompt is a request; this is the contract. Every drop is printed so
+        # a sudden collapse in yield is visible rather than silent.
+        venue = str(ev.get("venueName") or "").strip()
+        addr = str(ev.get("addressLine1") or "").strip()
+        if not venue and not addr:
+            # The ONLY thing this script drops outright. Such a row cannot
+            # tell anyone where to turn up, and isPublishableEvent already
+            # refuses it downstream, so it could only ever have sat in the
+            # queue. The URL is printed so a dropped lead is still
+            # recoverable from the run log rather than silently gone.
+            print(f"  drop (no venue, no address): {title[:60]} | {url}")
+            continue
+        # Missing evidence DOWNGRADES to unclear, it never drops the event.
+        # Dropping would be strictly worse than the old behaviour: a real find
+        # the scout simply could not quote would go from "in the queue for
+        # review" to "never submitted", and Dee would never see it. The only
+        # thing that changes for these is that they still need a human, which
+        # is exactly what happened before.
+        policy = str(ev.get("dogPolicy") or "").strip()
+        evidence = str(ev.get("dogEvidence") or "").strip()
+        # A quote too short to hold a clause is a label, not evidence.
+        if policy not in ("dogs-welcome", "find-a-dog") or len(evidence) < 15:
+            if policy in ("dogs-welcome", "find-a-dog"):
+                print(f"  downgrade to unclear (claim without a usable quote): {title[:60]}")
+            policy, evidence = "unclear", ""
+        ev["dogPolicy"] = policy
+        ev["dogEvidence"] = evidence
         # Date sanity: the model occasionally returns past events (last year's
         # Halloween contest etc.). Drop anything that started before yesterday;
         # unparseable dates pass through for the human moderator to judge.
@@ -194,6 +253,11 @@ def main() -> int:
             print(f"  NEW: {ev['title'][:60]} | {ev.get('startDateTime')} | organizer: {org or 'n/a'} {('<' + oem + '>') if oem else ''}")
             if args.dry_run or conn is None:
                 continue
+            # `screening` answers "is this spam". The nested `scout` key is a
+            # separate namespace for what the scout OBSERVED, kept here rather
+            # than in new columns so this needs no migration. triageSubmissions
+            # re-runs the audited eventPolicy rules against `dogEvidence`, so
+            # the scout's claim is checked, never trusted.
             screening = {
                 "verdict": "pass",
                 "score": 5,
@@ -201,6 +265,11 @@ def main() -> int:
                     "found by SnoutHub Event Scout",
                     f"source: {ev.get('url')}",
                 ] + ([f"organizer contact: {org} {oem}".strip()] if (org or oem) else []),
+                "scout": {
+                    "dogPolicy": ev["dogPolicy"],
+                    "dogEvidence": ev["dogEvidence"][:1000],
+                    "promptVersion": "2026-08-16-evidence",
+                },
             }
             with conn.cursor() as cur:
                 cur.execute(
