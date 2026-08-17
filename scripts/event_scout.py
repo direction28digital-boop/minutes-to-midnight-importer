@@ -103,7 +103,23 @@ Note `description` and `dogEvidence` are different on purpose. `description` is 
 Return [] if you find nothing that clears requirements 1 and 3. Maximum 12 events."""
 
 
-def scout_hub(hub: dict, api_key: str, model: str) -> list[dict]:
+def scout_hub(
+    hub: dict, api_key: str, model: str
+) -> tuple[list[dict], str | None]:
+    """Returns (events, error).
+
+    `error` is None when the API answered and we understood it, INCLUDING the
+    legitimate case of a city with nothing on. It is a string when the run did
+    not actually happen: HTTP failure, a response with no JSON array in it, or
+    unparseable JSON.
+
+    The distinction is the whole point. Before this, every one of those paths
+    returned [] and was indistinguishable from a quiet week, so main() summed
+    zeros, printed "Done. 0 found", and exited 0. The workflow has an
+    `if: failure()` alert step and always has; it never fired because the
+    sensor never tripped. The credit balance running out looked exactly like
+    a Sunday with no dog events in 22 cities.
+    """
     body = {
         "model": model,
         "max_tokens": 12000,
@@ -130,21 +146,32 @@ def scout_hub(hub: dict, api_key: str, model: str) -> list[dict]:
         timeout=300,
     )
     if r.status_code != 200:
-        print(f"  API error {r.status_code}: {r.text[:200]}")
-        return []
+        msg = f"HTTP {r.status_code}: {r.text[:200]}"
+        print(f"  API error {msg}")
+        return [], msg
     data = r.json()
     blocks = data.get("content", [])
     text = "".join(b.get("text", "") for b in blocks if b.get("type") == "text")
     m = re.search(r"\[[\s\S]*\]", text)
     if not m:
-        print(f"  debug: stop_reason={data.get('stop_reason')} "
+        stop = data.get("stop_reason")
+        print(f"  debug: stop_reason={stop} "
               f"searches_used={sum(1 for b in blocks if b.get('type') == 'server_tool_use')} "
               f"text_tail={text[-200:]!r}")
-        return []
+        # `end_turn` with real text and no array is the model saying it found
+        # nothing, which is a genuine answer. Anything else (max_tokens, an
+        # empty body, a refusal) means the reply was cut off or never arrived,
+        # and that is a failure, not a quiet city.
+        if stop == "end_turn" and text.strip():
+            return [], None
+        return [], f"no JSON array in the reply (stop_reason={stop})"
     try:
         events = json.loads(m.group(0))
-    except json.JSONDecodeError:
-        return []
+    except json.JSONDecodeError as err:
+        # This branch used to return [] with NO message at all, so a malformed
+        # reply was the quietest failure of the three.
+        print(f"  JSON parse failed: {err}")
+        return [], f"unparseable JSON: {err}"
     out = []
     for ev in events if isinstance(events, list) else []:
         if not isinstance(ev, dict):
@@ -191,7 +218,7 @@ def scout_hub(hub: dict, api_key: str, model: str) -> list[dict]:
         except ValueError:
             pass
         out.append(ev)
-    return out
+    return out, None
 
 
 def main() -> int:
@@ -235,10 +262,13 @@ def main() -> int:
         print(f"Dedupe set: {len(seen)} existing title+city pairs")
 
     total_found = total_new = 0
+    failures: list[tuple[str, str]] = []
     for hub in hubs:
         label = f"{hub['city']}, {hub['regionCode']}"
         print(f"\n=== {label} ===", flush=True)
-        events = scout_hub(hub, api_key, model)
+        events, err = scout_hub(hub, api_key, model)
+        if err:
+            failures.append((label, err))
         total_found += len(events)
         print(f"  found {len(events)} verifiable events")
         for ev in events:
@@ -301,6 +331,27 @@ def main() -> int:
     print("Review them at your SnoutHub Event Queue bookmark.")
     if conn:
         conn.close()
+
+    # A city with nothing on is a fine answer and exits 0. A city the scout
+    # could not reach is not, and must exit non-zero so the workflow's
+    # `if: failure()` alert step actually runs.
+    #
+    # Partial failures fail the run too, on purpose. Any rows found before the
+    # failure are already committed, so nothing is lost by exiting 1 - the only
+    # thing that changes is that a sweep which quietly lost 6 of 22 cities
+    # stops looking identical to one that swept all 22.
+    if failures:
+        print(f"\nFAILED on {len(failures)} of {len(hubs)} cities. "
+              "These were NOT searched, so a low count above does not mean "
+              "there was nothing to find:")
+        for label, reason in failures:
+            print(f"  - {label}: {reason}")
+        if len(failures) == len(hubs):
+            print("\nEVERY city failed. That is an API or credential problem, "
+                  "not a quiet week. Check the Anthropic credit balance and the "
+                  "key before assuming the scout has run dry.")
+        return 1
+
     return 0
 
 
