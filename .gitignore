@@ -46,3 +46,8 @@ places_prefill.py
 data_events/dataRan/serpapi_runs/
 
 .backfill_artifacts/
+
+# Agent tooling and local scratch
+.claude/
+_to_delete/
+mill_candidates.csv
