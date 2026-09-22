@@ -43,8 +43,8 @@ def fetch_page(page: int, limit: int = 250) -> dict:
     params = {
         "page": page,
         "limit": limit,
-        # we need orgs for location; pictures will come from animal attributes
-        "include": "orgs",
+        # orgs for location; pictures for the full-size photo set (photosFull)
+        "include": "orgs,pictures",
     }
 
     response = None
@@ -121,16 +121,69 @@ def map_country_to_code(country: str) -> str:
     return country[:2].upper()
 
 
+def tri_state(value) -> bool | None:
+    """RG compatibility/boolean flags -> True / False / None (unknown).
+
+    The old `attrs.get(x) or ""` pattern turned False into "", which made
+    "not good with cats" indistinguishable from "unknown". Downstream
+    parseCompat() in snouthub-location-app already accepts true/false/null.
+    """
+    if value is True or value is False:
+        return value
+    if value is None:
+        return None
+    s = str(value).strip().lower()
+    if s in ("yes", "y", "true", "1"):
+        return True
+    if s in ("no", "n", "false", "0"):
+        return False
+    return None
+
+
+def build_photos_full(animal: dict, pictures_by_id: dict[str, dict]) -> list[dict]:
+    """All of a dog's photos at full size, in the rescue's order.
+
+    Additive: `photos` (single thumbnail, rehosted downstream) is unchanged.
+    """
+    rels = animal.get("relationships", {}) or {}
+    refs = (rels.get("pictures") or {}).get("data") or []
+    out: list[dict] = []
+    for ref in refs:
+        pic = pictures_by_id.get(str(ref.get("id")))
+        if not pic:
+            continue
+        pa = pic.get("attributes", {}) or {}
+        original = pa.get("original") or {}
+        large = pa.get("large") or {}
+        url = original.get("url") or large.get("url")
+        if not (isinstance(url, str) and url.startswith("http")):
+            continue
+        out.append(
+            {
+                "url": url,
+                "width": original.get("resolutionX") or large.get("resolutionX"),
+                "height": original.get("resolutionY") or large.get("resolutionY"),
+                "largeUrl": large.get("url") or url,
+                "order": pa.get("order"),
+            }
+        )
+    out.sort(key=lambda p: (p["order"] is None, p["order"] or 0))
+    return out
+
+
 def normalize_animals(page_data: dict) -> list[dict]:
     animals = page_data.get("data", [])
     included = page_data.get("included", [])
 
     orgs_by_id: dict[str, dict] = {}
+    pictures_by_id: dict[str, dict] = {}
 
-    # Build org lookup so we can attach city/state to each dog
+    # Build org + picture lookups from the JSON:API `included` block
     for inc in included:
         if inc.get("type") == "orgs":
             orgs_by_id[inc["id"]] = inc
+        elif inc.get("type") == "pictures":
+            pictures_by_id[str(inc["id"])] = inc
 
     normalized: list[dict] = []
 
@@ -226,12 +279,23 @@ def normalize_animals(page_data: dict) -> list[dict]:
                 "descriptionPlain": attrs.get("descriptionText") or "",
                 "descriptionHtml": attrs.get("descriptionHtml") or "",
                 "compatibility": {
-                    "goodWithDogs": attrs.get("isDogsOk") or "",
-                    "goodWithCats": attrs.get("isCatsOk") or "",
-                    "goodWithKids": attrs.get("isKidsOk") or "",
+                    "goodWithDogs": tri_state(attrs.get("isDogsOk")),
+                    "goodWithCats": tri_state(attrs.get("isCatsOk")),
+                    "goodWithKids": tri_state(attrs.get("isKidsOk")),
                 },
-                # now populated with at most one RG thumbnail URL
+                # at most one RG thumbnail URL (rehosted downstream; unchanged)
                 "photos": photos,
+                # ADDITIVE 2026-09-22: full-size photo set for video formats
+                "photosFull": build_photos_full(animal, pictures_by_id),
+                "pictureCount": attrs.get("pictureCount") or 0,
+                "qualities": attrs.get("qualities") or [],
+                "energyLevel": attrs.get("energyLevel") or "",
+                "activityLevel": attrs.get("activityLevel") or "",
+                "vocalLevel": attrs.get("vocalLevel") or "",
+                "newPeopleReaction": attrs.get("newPeopleReaction") or "",
+                "isHousetrained": tri_state(attrs.get("isHousetrained")),
+                "isAdoptionPending": bool(attrs.get("isAdoptionPending")),
+                # killReason is deliberately never carried into normalized output
                 "org": {
                     "name": org_attrs.get("name") or "",
                     "city": city,
